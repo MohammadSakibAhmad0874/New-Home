@@ -12,10 +12,9 @@
 using namespace websockets;
 
 // ==================== Backend Configuration ====================
-// IP address of your computer running the backend
-// CHANGE THIS TO YOUR PC's IP ADDRESS!
-#define BACKEND_HOST "192.168.1.100" 
-#define BACKEND_PORT 8000
+// Render.com Host (No http:// or https://)
+#define BACKEND_HOST "homecontrol-backend.onrender.com" 
+#define BACKEND_PORT 443
 
 // Device ID (must match backend registration)
 #define DEVICE_ID "SH-001"
@@ -115,7 +114,8 @@ void initWebSocket() {
     client.onEvent(onEventsCallback);
     
     // Connect
-    String url = "ws://" + String(BACKEND_HOST) + ":" + String(BACKEND_PORT) + "/api/v1/ws/" + String(DEVICE_ID);
+    // Connect (WSS for Secure WebSocket on port 443)
+    String url = "wss://" + String(BACKEND_HOST) + "/api/v1/ws/" + String(DEVICE_ID);
     
     #if ENABLE_SERIAL_DEBUG
     Serial.print("Connecting to: ");

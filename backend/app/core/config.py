@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
+    # Integrations
+    WEBHOOK_SECRET: str = "voice_secret_123"
+    
     class Config:
         case_sensitive = True
 
