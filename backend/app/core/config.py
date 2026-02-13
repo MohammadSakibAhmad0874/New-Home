@@ -19,4 +19,11 @@ class Settings(BaseSettings):
     class Config:
         case_sensitive = True
 
+    @property
+    def ASYNC_DATABASE_URL(self) -> str:
+        url = self.DATABASE_URL
+        if url and url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+        return url
+
 settings = Settings()
