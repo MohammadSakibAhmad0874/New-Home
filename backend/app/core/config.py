@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     
     # Integrations
     WEBHOOK_SECRET: str = "voice_secret_123"
+    NTFY_TOPIC: str = "homecontrol_ghosty_alerts"
     
     class Config:
         case_sensitive = True
