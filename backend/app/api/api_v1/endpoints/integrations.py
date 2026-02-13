@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db.session import get_db
 from core.config import settings
 from api.api_v1.endpoints.websockets import manager
-from models.device import Device
+from db.models import Device
 from pydantic import BaseModel
 from sqlalchemy.future import select
 
