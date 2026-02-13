@@ -1,0 +1,33 @@
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text, DateTime, JSON
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+from db.session import Base
+import datetime
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    is_active = Column(Boolean, default=True)
+    is_superuser = Column(Boolean, default=False)
+    
+    devices = relationship("Device", back_populates="owner")
+
+class Device(Base):
+    __tablename__ = "devices"
+
+    id = Column(String, primary_key=True, index=True) # "SH-001"
+    owner_id = Column(Integer, ForeignKey("users.id"))
+    name = Column(String, index=True)
+    type = Column(String, default="esp32")
+    
+    online = Column(Boolean, default=False)
+    last_seen = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    ip_address = Column(String, nullable=True)
+    
+    # Store relay state as JSON: {"relay1": {"state": true}, ...}
+    start_state = Column(JSON, default={})
+    
+    owner = relationship("User", back_populates="devices")

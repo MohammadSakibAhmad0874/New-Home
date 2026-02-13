@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartHome Cloud - Admin Panel</title>
+    <meta name="description" content="Admin panel for managing all SmartHome devices">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p>Loading admin panel...</p>
+    </div>
+
+    <div class="dashboard" id="adminPanel" style="display:none;max-width:1100px;">
+        <!-- Header -->
+        <div class="dash-header">
+            <h1>⚡ Admin Panel</h1>
+            <div class="nav-links">
+                <a href="dashboard.html" class="nav-link">Dashboard</a>
+                <a href="admin.html" class="nav-link active">Admin</a>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-bar" id="statsBar">
+            <div class="stat-card">
+                <div class="stat-value" id="totalDevices">0</div>
+                <div class="stat-label">Total Devices</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="onlineDevices">0</div>
+                <div class="stat-label">Online</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="offlineDevices">0</div>
+                <div class="stat-label">Offline</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalUsers">0</div>
+                <div class="stat-label">Users</div>
+            </div>
+        </div>
+
+        <!-- Make me admin button (first time setup) -->
+        <div id="makeAdminSection" style="display:none;margin-bottom:20px;">
+            <div
+                style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:14px;padding:18px;text-align:center;">
+                <p style="color:var(--accent-orange);margin-bottom:10px;font-weight:600;">⚠️ No admin set up yet</p>
+                <p style="color:var(--text-muted);font-size:0.85em;margin-bottom:14px;">Click below to make yourself the
+                    admin (first time only)</p>
+                <button class="btn btn-primary" onclick="makeAdmin()" style="max-width:250px;margin:0 auto;">👑 Make Me
+                    Admin</button>
+            </div>
+        </div>
+
+        <!-- Access denied -->
+        <div id="accessDenied" style="display:none;text-align:center;padding:60px 20px;">
+            <p style="font-size:3em;margin-bottom:10px;">🔒</p>
+            <h2 style="color:var(--accent-red);margin-bottom:10px;">Access Denied</h2>
+            <p style="color:var(--text-muted);">You are not an admin. Contact the system administrator.</p>
+            <a href="dashboard.html" class="btn btn-primary"
+                style="max-width:200px;display:inline-block;margin-top:20px;text-decoration:none;text-align:center;">←
+                Back to Dashboard</a>
+        </div>
+
+        <!-- All Devices -->
+        <h2 style="margin-bottom:16px;font-size:1.3em;display:none;" id="devicesTitle">📱 All Registered Devices</h2>
+        <div class="admin-grid" id="devicesGrid"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="app.js"></script>
+    <script>
+        let currentUid = null;
+
+        requireAuth(async (user) => {
+            currentUid = user.uid;
+
+            // Check if any admin exists
+            const adminsSnap = await db.ref('admins').once('value');
+            const adminsExist = adminsSnap.exists();
+
+            if (!adminsExist) {
+                // No admin yet — show "make me admin" button
+                document.getElementById('makeAdminSection').style.display = 'block';
+                document.getElementById('loadingOverlay').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+                return;
+            }
+
+            // Check if current user is admin
+            const isAdminUser = await isAdmin(user.uid);
+            if (!isAdminUser) {
+                document.getElementById('accessDenied').style.display = 'block';
+                document.getElementById('loadingOverlay').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+                return;
+            }
+
+            // Load admin dashboard
+            loadAdminData();
+        });
+
+        async function makeAdmin() {
+            await db.ref('admins/' + currentUid).set(true);
+            location.reload();
+        }
+
+        function loadAdminData() {
+            document.getElementById('devicesTitle').style.display = 'block';
+
+            // Real-time listener for all devices
+            db.ref('devices').on('value', (snapshot) => {
+                const devices = snapshot.val() || {};
+                const deviceIds = Object.keys(devices);
+
+                let online = 0, offline = 0;
+                deviceIds.forEach(id => {
+                    if (devices[id].online) online++;
+                    else offline++;
+                });
+
+                document.getElementById('totalDevices').textContent = deviceIds.length;
+                document.getElementById('onlineDevices').textContent = online;
+                document.getElementById('offlineDevices').textContent = offline;
+
+                // Render device cards
+                const grid = document.getElementById('devicesGrid');
+                let html = '';
+
+                deviceIds.forEach(id => {
+                    const device = devices[id];
+                    const relays = device.relays || {};
+                    const isOnline = device.online === true;
+                    const lastSeen = device.lastSeen ? getTimeAgo(device.lastSeen) : 'Never';
+
+                    html += `
+                    <div class="device-card">
+                        <div class="device-card-header">
+                            <div>
+                                <div class="device-card-id">${id}</div>
+                                <div style="font-size:0.8em;color:var(--text-muted);">${device.ownerName || 'Unknown'}</div>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:6px;">
+                                <div class="status-dot ${isOnline ? 'online' : 'offline'}"></div>
+                                <span style="font-size:0.8em;color:${isOnline ? 'var(--accent-green)' : 'var(--accent-red)'};">
+                                    ${isOnline ? 'Online' : 'Offline'}
+                                </span>
+                            </div>
+                        </div>
+                        <div style="font-size:0.75em;color:var(--text-muted);margin-bottom:12px;">Last: ${lastSeen}</div>
+                        <div class="device-card-relays">`;
+
+                    Object.keys(relays).sort().forEach(key => {
+                        const relay = relays[key];
+                        const isOn = relay.state === true;
+                        html += `
+                            <div class="mini-relay" style="cursor:pointer;" onclick="toggleRelay('${id}', '${key}', ${isOn})">
+                                <span>${relay.name || key}</span>
+                                <span class="mini-relay-status ${isOn ? 'on' : 'off'}">${isOn ? 'ON' : 'OFF'}</span>
+                            </div>`;
+                    });
+
+                    html += `</div></div>`;
+                });
+
+                grid.innerHTML = html || '<p style="color:var(--text-muted);text-align:center;grid-column:1/-1;">No devices registered yet.</p>';
+
+                document.getElementById('loadingOverlay').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+            });
+
+            // Count users
+            db.ref('users').on('value', (snapshot) => {
+                const users = snapshot.val() || {};
+                document.getElementById('totalUsers').textContent = Object.keys(users).length;
+            });
+        }
+
+        function getTimeAgo(timestamp) {
+            const seconds = Math.floor((Date.now() - timestamp) / 1000);
+            if (seconds < 60) return 'Just now';
+            if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
+            if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
+            return Math.floor(seconds / 86400) + 'd ago';
+        }
+    </script>
+</body>
+
+</html>

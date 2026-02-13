@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Docker
+.pytest_cache/
+
+# OS
+Thumbs.db
+Desktop.ini
+
+# Arduino
+*.elf
+*.bin
+*.hex
+
+# Node
+node_modules/

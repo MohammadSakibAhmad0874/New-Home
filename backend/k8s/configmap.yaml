@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+data:
+  POSTGRES_USER: postgres
+  POSTGRES_DB: homecontrol
+  DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/homecontrol
+  REDIS_URL: redis://redis:6379/0
+  ALGORITHM: HS256
+  ACCESS_TOKEN_EXPIRE_MINUTES: "30"
