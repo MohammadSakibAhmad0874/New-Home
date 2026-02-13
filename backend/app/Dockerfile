@@ -1,4 +1,4 @@
-# Use full Python image (not slim) to ensure all build tools (gcc, make, openssl, etc.) are present
+# Use full Python image
 FROM python:3.11
 
 WORKDIR /app
@@ -6,14 +6,23 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# Start fresh, just install libpq-dev for postgres
+# Install build dependencies including Rust (needed for pydantic/cryptography builds)
 RUN apt-get update \
-    && apt-get install -y libpq-dev \
+    && apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    libffi-dev \
+    libssl-dev \
+    cargo \
+    rustc \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+
+# Upgrade pip and install with preference for binary wheels to save build time/memory
+RUN pip install --upgrade pip \
+    && pip install --no-cache-dir --prefer-binary -r requirements.txt
 
 COPY . .
 
