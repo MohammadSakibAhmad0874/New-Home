@@ -4,6 +4,7 @@ services:
     name: homecontrol-backend
     env: docker
     dockerContext: ./backend/app
+    dockerfilePath: ./backend/app/Dockerfile
     plan: free
     envVars:
       - key: DATABASE_URL
