@@ -1,16 +1,14 @@
-FROM python:3.11-slim
+# Use full Python image (not slim) to ensure all build tools (gcc, make, openssl, etc.) are present
+FROM python:3.11
 
 WORKDIR /app
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# Install system dependencies (build-essential includes gcc, make, etc.)
+# Start fresh, just install libpq-dev for postgres
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-    build-essential \
-    python3-dev \
-    libpq-dev \
+    && apt-get install -y libpq-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
