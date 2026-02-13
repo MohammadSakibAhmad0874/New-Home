@@ -107,6 +107,52 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- Firmware Section -->
+        <div class="device-status" style="justify-content: space-between; margin-top:40px;">
+            <div>
+                <h2 style="font-size:1.2em; margin-bottom:4px;">Firmware OTA</h2>
+                <p style="color:var(--text-muted); font-size:0.9em;">Upload new ESP32 firmware</p>
+            </div>
+        </div>
+
+        <!-- Upload Form -->
+        <div class="auth-card" style="margin-top:20px; padding:20px; max-width:100%;">
+            <form id="uploadFwForm" onsubmit="handleUploadFirmware(event)"
+                style="display:flex; gap:10px; align-items:flex-end;">
+                <div class="form-group" style="flex:1;">
+                    <label>Version (e.g. 1.0.1)</label>
+                    <input type="text" id="fwVersion" required placeholder="1.0.1">
+                </div>
+                <div class="form-group" style="flex:2;">
+                    <label>Description</label>
+                    <input type="text" id="fwDesc" placeholder="Bug fixes...">
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label>File (.bin)</label>
+                    <input type="file" id="fwFile" accept=".bin" required style="padding:8px;">
+                </div>
+                <button type="submit" class="btn btn-primary" style="height:42px;">Upload</button>
+            </form>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Version</th>
+                        <th>Description</th>
+                        <th>Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="firmwareTableBody">
+                    <tr>
+                        <td colspan="4" style="text-align:center;">No firmware uploaded</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <!-- Add User Modal (Simple Overlay) -->
@@ -177,6 +223,74 @@
             }
         }
 
+        // --- Firmware Logic ---
+        async function loadFirmware() {
+            try {
+                const res = await fetch(`${API_URL}/firmware/`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const firmwares = await res.json();
+                    renderFirmware(firmwares);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function renderFirmware(firmwares) {
+            const tbody = document.getElementById('firmwareTableBody');
+            let html = '';
+            firmwares.forEach(fw => {
+                html += `
+                <tr>
+                    <td>${fw.version}</td>
+                    <td>${fw.description || '-'}</td>
+                    <td>${new Date(fw.upload_date).toLocaleString()}</td>
+                    <td>
+                        <a href="${API_URL}/firmware/download/${fw.version}" target="_blank" class="btn-sm" style="text-decoration:none; color:var(--accent-primary);">Download</a>
+                    </td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        async function handleUploadFirmware(e) {
+            e.preventDefault();
+            const version = document.getElementById('fwVersion').value;
+            const description = document.getElementById('fwDesc').value;
+            const fileInput = document.getElementById('fwFile');
+            const file = fileInput.files[0];
+
+            if (!file) return alert("Please select a file");
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Re-doing the fetch call properly
+            const uploadUrl = `${API_URL}/firmware/upload?version=${encodeURIComponent(version)}&description=${encodeURIComponent(description)}`;
+
+            try {
+                const res = await fetch(uploadUrl, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData // FormData contains 'file' part
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail);
+                }
+
+                showFirmwareSuccess("Firmware uploaded");
+                loadFirmware();
+                closeUploadFirmwareModal();
+                e.target.reset();
+            } catch (err) {
+                showFirmwareError(err.message);
+            }
+        }
+
         function renderUsers(users) {
             const tbody = document.getElementById('userTableBody');
             let html = '';
@@ -189,7 +303,7 @@
                     <td><span class="badge ${user.is_superuser ? 'superuser' : 'user'}">${user.is_superuser ? 'Admin' : 'User'}</span></td>
                     <td>${user.is_active ? '✅ Active' : '🔴 Inactive'}</td>
                     <td>
-                        <button class="logout-btn" onclick="deleteUser(${user.id})" style="padding:4px 8px; font-size:0.8em;">Delete</button>
+                        ${!user.is_superuser ? `<button class="logout-btn" onclick="deleteUser(${user.id})" style="padding:4px 8px; font-size:0.8em;">Delete</button>` : ''}
                     </td>
                 </tr>`;
             });

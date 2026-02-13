@@ -59,6 +59,91 @@ void startMDNS() {
   #endif
 }
 
+#include <HTTPUpdate.h>
+#include <HTTPClient.h>
+
+// Current Firmware Version
+const char* CURRENT_VERSION = "1.0.0";
+
+void checkForUpdates() {
+  if (WiFi.status() != WL_CONNECTED) return;
+
+  #if ENABLE_SERIAL_DEBUG
+  Serial.println("Checking for firmware updates...");
+  #endif
+  
+  WiFiClientSecure client;
+  client.setInsecure(); // Skip cert validation for simplicity
+  
+  HTTPClient http;
+  // Construct URL
+  String url = String("https://") + BACKEND_HOST + "/api/v1/firmware/check?current_version=" + CURRENT_VERSION;
+  
+  if (http.begin(client, url)) {
+    int httpCode = http.GET();
+    if (httpCode == HTTP_CODE_OK) {
+      String payload = http.getString();
+      #if ENABLE_SERIAL_DEBUG
+      Serial.println("Update Info: " + payload);
+      #endif
+      
+      // Quick hack: Check if payload contains "url"
+      if (payload.indexOf("\"url\"") > 0) {
+          int urlStart = payload.indexOf("\"url\":") + 6;
+          // Find first quote after "url":
+          while(payload[urlStart] != '"') urlStart++;
+          urlStart++; // Skip quote
+          
+          int urlEnd = payload.indexOf("\"", urlStart);
+          String downloadUrl = payload.substring(urlStart, urlEnd);
+          
+          // If relative URL, prepend host
+          if (downloadUrl.startsWith("/")) {
+             downloadUrl = String("https://") + BACKEND_HOST + downloadUrl;
+          }
+          
+          #if ENABLE_SERIAL_DEBUG
+          Serial.println("New firmware found! Downloading from: " + downloadUrl);
+          #endif
+          
+          // Callback
+          t_httpUpdate_return ret = httpUpdate.update(client, downloadUrl);
+          
+          switch (ret) {
+            case HTTP_UPDATE_FAILED:
+              #if ENABLE_SERIAL_DEBUG
+              Serial.printf("HTTP_UPDATE_FAILD Error (%d): %s\n", httpUpdate.getLastError(), httpUpdate.getLastErrorString().c_str());
+              #endif
+              break;
+            case HTTP_UPDATE_NO_UPDATES:
+              #if ENABLE_SERIAL_DEBUG
+              Serial.println("HTTP_UPDATE_NO_UPDATES");
+              #endif
+              break;
+            case HTTP_UPDATE_OK:
+              #if ENABLE_SERIAL_DEBUG
+              Serial.println("HTTP_UPDATE_OK");
+              #endif
+              break;
+          }
+      } else {
+        #if ENABLE_SERIAL_DEBUG
+        Serial.println("No update available.");
+        #endif
+      }
+    } else {
+      #if ENABLE_SERIAL_DEBUG
+      Serial.printf("Check failed, error: %s\n", http.errorToString(httpCode).c_str());
+      #endif
+    }
+    http.end();
+  } else {
+      #if ENABLE_SERIAL_DEBUG
+      Serial.println("Unable to connect to update server");
+      #endif
+  }
+}
+
 /*
  * Setup Function - Runs once at startup
  */
@@ -87,8 +172,9 @@ void setup() {
   // Start mDNS for device discovery (only when connected to WiFi)
   if (!portalActive && wifiConnected) {
     startMDNS();
-    // Start Cloud Sync (WebSocket)
+  // Start Cloud Sync (WebSocket)
     // initFirebaseSync();
+    checkForUpdates();
     initWebSocket();
   }
   

@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text, DateTime, JSON
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text, DateTime, JSON, LargeBinary
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from db.session import Base
@@ -30,4 +30,15 @@ class Device(Base):
     # Store relay state as JSON: {"relay1": {"state": true}, ...}
     start_state = Column(JSON, default={})
     
-    owner = relationship("User", back_populates="devices")
+
+class Firmware(Base):
+    __tablename__ = "firmware"
+
+    id = Column(Integer, primary_key=True, index=True)
+    version = Column(String, unique=True, index=True, nullable=False) # e.g. "1.0.1"
+    filename = Column(String)
+    description = Column(String, nullable=True)
+    upload_date = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Store binary data directly in DB for simplicity
+    data = Column(LargeBinary)
