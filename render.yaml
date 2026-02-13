@@ -20,13 +20,15 @@ services:
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
         value: "60"
 
+  # Managed Redis
+  - type: redis
+    name: homecontrol-redis
+    plan: free
+    ipAllowList: []    
+
 databases:
   # Managed PostgreSQL
   - name: homecontrol-db
     plan: free
     databaseName: homecontrol
     user: homecontrol
-
-  # Managed Redis
-  - name: homecontrol-redis
-    plan: free
