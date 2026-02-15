@@ -77,7 +77,9 @@ void checkForUpdates() {
   
   HTTPClient http;
   // Construct URL
-  String url = String("https://") + BACKEND_HOST + "/api/v1/firmware/check?current_version=" + CURRENT_VERSION;
+  String protocol = BACKEND_SECURE ? "https://" : "http://";
+  String portStr = (BACKEND_PORT == 80 || BACKEND_PORT == 443) ? "" : ":" + String(BACKEND_PORT);
+  String url = protocol + String(BACKEND_HOST) + portStr + "/api/v1/firmware/check?current_version=" + CURRENT_VERSION + "&api_key=" + String(DEVICE_API_KEY);
   
   if (http.begin(client, url)) {
     int httpCode = http.GET();
@@ -99,7 +101,7 @@ void checkForUpdates() {
           
           // If relative URL, prepend host
           if (downloadUrl.startsWith("/")) {
-             downloadUrl = String("https://") + BACKEND_HOST + downloadUrl;
+             downloadUrl = protocol + String(BACKEND_HOST) + portStr + downloadUrl;
           }
           
           #if ENABLE_SERIAL_DEBUG
@@ -160,6 +162,9 @@ void setup() {
   // Initialize relay control
   initRelays();
   
+  // Init Sensor
+  dht.begin();
+  
   // WiFi Setup with captive portal
   #if ENABLE_CAPTIVE_PORTAL
   setupWiFiWithPortal();
@@ -214,6 +219,12 @@ void setup() {
   #endif
 }
 
+#include <DHT.h>
+
+DHT dht(DHT_PIN, DHT_TYPE);
+unsigned long lastSensorRead = 0;
+const long SENSOR_INTERVAL = 30000; // 30 seconds
+
 /*
  * Main Loop - Runs continuously
  */
@@ -226,6 +237,33 @@ void loop() {
   
   // Firebase cloud sync (poll for remote commands)
   cloudSyncLoop();
+  
+  // Sensor Read Loop
+  if (millis() - lastSensorRead > SENSOR_INTERVAL) {
+      lastSensorRead = millis();
+      // Read DHT
+      float h = dht.readHumidity();
+      float t = dht.readTemperature(); // Celsius
+      
+      #if ENABLE_SERIAL_DEBUG
+      if (isnan(h) || isnan(t)) {
+        Serial.println(F("Failed to read from DHT sensor!"));
+      } else {
+        Serial.print(F("Humidity: "));
+        Serial.print(h);
+        Serial.print(F("%  Temperature: "));
+        Serial.print(t);
+        Serial.println(F("°C"));
+        
+        // Send to Backend
+        sendSensorData(t, h);
+      }
+      #endif
+      
+      if (!isnan(h) && !isnan(t)) {
+         sendSensorData(t, h);
+      }
+  }
   
   // Check WiFi connection (reconnect if lost)
   if (!portalActive && wifiConnected && WiFi.status() != WL_CONNECTED) {

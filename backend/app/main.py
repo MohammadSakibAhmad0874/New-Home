@@ -32,6 +32,11 @@ async def on_startup():
         print("✅ Database tables created.")
     except Exception as e:
         print(f"❌ DB Init Failed: {e}")
+        
+    # Start Scheduler
+    import asyncio
+    from core.scheduler import check_schedules
+    asyncio.create_task(check_schedules())
 
 @app.get("/")
 def root():
@@ -39,4 +44,8 @@ def root():
 
 @app.get("/health")
 def health_check():
+    return {"status": "ok"}
+
+@app.get(settings.API_V1_STR + "/health")
+def health_check_v1():
     return {"status": "ok"}

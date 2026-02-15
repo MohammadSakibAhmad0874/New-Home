@@ -11,13 +11,9 @@
 
 using namespace websockets;
 
-// ==================== Backend Configuration ====================
-// Render.com Host (No http:// or https://)
-#define BACKEND_HOST "homecontrol-backend.onrender.com" 
-#define BACKEND_PORT 443
-
-// Device ID (must match backend registration)
-#define DEVICE_ID "SH-001"
+// ============= Backend Configuration =============
+// Configuration is now in config.h
+// Uses: BACKEND_HOST, BACKEND_PORT, DEVICE_ID, DEVICE_API_KEY
 
 // ==================== Globals ====================
 WebsocketsClient client;
@@ -114,14 +110,17 @@ void initWebSocket() {
     client.onEvent(onEventsCallback);
     
     // Connect
-    // Connect (WSS for Secure WebSocket on port 443)
-    String url = "wss://" + String(BACKEND_HOST) + "/api/v1/ws/" + String(DEVICE_ID);
+    // Construct URL with Auth
+    String protocol = BACKEND_SECURE ? "wss://" : "ws://";
+    String portStr = (BACKEND_PORT == 80 || BACKEND_PORT == 443) ? "" : ":" + String(BACKEND_PORT);
+    String url = protocol + String(BACKEND_HOST) + portStr + "/api/v1/ws/" + String(DEVICE_ID) + "?api_key=" + String(DEVICE_API_KEY);
     
     #if ENABLE_SERIAL_DEBUG
     Serial.print("Connecting to: ");
     Serial.println(url);
     #endif
     
+    // Note: ArduinoWebsockets client.connect() handles the protocol prefix
     client.connect(url);
 }
 
@@ -146,6 +145,27 @@ void sendStateUpdate() {
         JsonObject relay = data.createNestedObject(key);
         relay["state"] = (relayStates[i] == true); // explicitly bool
     }
+    
+    String jsonString;
+    serializeJson(doc, jsonString);
+    client.send(jsonString);
+    serializeJson(doc, jsonString);
+    client.send(jsonString);
+}
+
+void sendSensorData(float temperature, float humidity) {
+    if (!isConnected) return;
+    
+    StaticJsonDocument<256> doc;
+    doc["type"] = "sensor_update";
+    
+    JsonObject data = doc.createNestedObject("data");
+    // Handle NaN
+    if (isnan(temperature)) data["temperature"] = "null";
+    else data["temperature"] = temperature;
+    
+    if (isnan(humidity)) data["humidity"] = "null";
+    else data["humidity"] = humidity;
     
     String jsonString;
     serializeJson(doc, jsonString);

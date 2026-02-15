@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="manifest.json">
     <title>SmartHome Cloud - Dashboard</title>
     <meta name="description" content="Control your ESP32 Smart Home switches from anywhere">
     <link rel="stylesheet" href="style.css">
@@ -20,32 +21,86 @@
         <!-- Header -->
         <div class="dash-header">
             <div>
-                <h1>🏠 SmartHome</h1>
+                <h1>SmartHome</h1>
+                <p style="color:var(--text-secondary); font-size:0.9rem;">Welcome, <span id="userName">User</span></p>
             </div>
             <div class="nav-links">
-                <a href="dashboard.html" class="nav-link active">Dashboard</a>
-                <!-- Admin link removed for now until implemented in backend -->
-                <button class="logout-btn" onclick="logout()">Logout</button>
+                <button class="logout-btn" onclick="logout()">Sign Out</button>
             </div>
         </div>
 
-        <!-- User info -->
-        <div class="user-badge" style="margin-bottom:16px;">
-            <span>👤 <span id="userName">User</span></span>
-            <span style="color:var(--text-muted);">|</span>
-            <span>📱 Device: <strong id="userDeviceId">—</strong></span>
-        </div>
-
-        <!-- Device status -->
+        <!-- Device Status Banner -->
         <div class="device-status">
             <div class="status-dot" id="statusDot"></div>
-            <span id="statusText" style="font-weight:600;">Connecting...</span>
-            <span class="device-id-label" id="lastSeenLabel" style="margin-left:auto;"></span>
+            <div>
+                <span id="statusText" style="font-weight:600; display:block;">Connecting...</span>
+                <span style="font-size:0.8rem; color:var(--text-muted); display:block;">ID: <span
+                        id="userDeviceId">--</span></span>
+            </div>
         </div>
 
-        <!-- Switch Controls -->
-        <div class="controls-grid" id="controlsGrid">
-            <!-- Dynamically populated -->
+        <!-- Sensor Card -->
+        <div class="sensor-card">
+            <div class="sensor-item">
+                <span class="sensor-icon">🌡️</span>
+                <span class="sensor-label">Temp</span>
+                <div class="sensor-data">
+                    <span class="sensor-value" id="tempValue">--</span>
+                    <span class="sensor-unit">°C</span>
+                </div>
+            </div>
+            <div class="sensor-divider"></div>
+            <div class="sensor-item">
+                <span class="sensor-icon">💧</span>
+                <span class="sensor-label">Humidity</span>
+                <div class="sensor-data">
+                    <span class="sensor-value" id="humValue">--</span>
+                    <span class="sensor-unit">%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div style="display:flex; gap:10px; margin-bottom:20px;">
+            <button class="auth-tab active" id="tab-controls" onclick="switchDashTab('controls')">Controls</button>
+            <button class="auth-tab" id="tab-schedules" onclick="switchDashTab('schedules')">Schedules</button>
+        </div>
+
+        <!-- Controls View -->
+        <div id="view-controls">
+            <!-- Switch Controls Grid -->
+            <div class="controls-grid" id="switchGrid">
+                <!-- Switches injected by JS -->
+            </div>
+        </div>
+
+        <!-- Schedules View -->
+        <div id="view-schedules" style="display:none;">
+            <div class="sensor-card" style="flex-direction:column; align-items:stretch; gap:15px;">
+                <h3>Add Schedule</h3>
+                <div style="display:flex; gap:10px;">
+                    <select id="schDevice"
+                        style="flex:1; padding:10px; border-radius:10px; background:rgba(255,255,255,0.1); color:white; border:1px solid rgba(255,255,255,0.1);">
+                        <option value="relay1">Living Room</option>
+                        <option value="relay2">Bedroom</option>
+                        <option value="relay3">Kitchen</option>
+                        <option value="relay4">Fan</option>
+                    </select>
+                    <input type="time" id="schTime" style="flex:1;">
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <select id="schAction"
+                        style="flex:1; padding:10px; border-radius:10px; background:rgba(255,255,255,0.1); color:white; border:1px solid rgba(255,255,255,0.1);">
+                        <option value="true">Turn ON</option>
+                        <option value="false">Turn OFF</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="addSchedule()">Save</button>
+                </div>
+            </div>
+
+            <div id="schedulesList">
+                <!-- List items injected here -->
+            </div>
         </div>
 
         <!-- ESP32 Setup Info -->
@@ -82,7 +137,7 @@
 
     <!-- Config & Logic -->
     <script src="config.js"></script>
-    <script src="app.js"></script>
+    <!-- <script src="app.js"></script> -->
     <script>
         const switchIcons = ['💡', '🛏️', '🍳', '🌀', '💡', '💡', '💡', '💡'];
         let currentDevice = null;
@@ -124,6 +179,8 @@
 
                 // Render initial state
                 renderDevice(currentDevice);
+                // Render Sensor Initial State
+                if (currentDevice.temperature) updateSensorUI(currentDevice.temperature, currentDevice.humidity);
 
                 // 3. Connect WebSocket
                 connectWebSocket(currentDevice.id);
@@ -139,7 +196,7 @@
         }
 
         function connectWebSocket(deviceId) {
-            ws = new WebSocket(`${WS_URL}/${deviceId}`);
+            ws = new WebSocket(`${WS_URL}/${deviceId}?token=${token}`);
 
             ws.onopen = () => {
                 console.log("WS Connected");
@@ -154,6 +211,9 @@
                     if (!currentDevice.start_state) currentDevice.start_state = {};
                     Object.assign(currentDevice.start_state, msg.data);
                     renderDevice(currentDevice);
+                } else if (msg.type === 'sensor_update') {
+                    console.log("Sensor Update:", msg.data);
+                    updateSensorUI(msg.data.temperature, msg.data.humidity);
                 }
             };
 
@@ -163,6 +223,14 @@
                 // Reconnect after 3s
                 setTimeout(() => connectWebSocket(deviceId), 3000);
             };
+        }
+
+        function updateSensorUI(temp, hum) {
+            if (temp !== undefined && temp !== null && temp !== "null")
+                document.getElementById('tempValue').textContent = typeof temp === 'number' ? temp.toFixed(1) : temp;
+
+            if (hum !== undefined && hum !== null && hum !== "null")
+                document.getElementById('humValue').textContent = typeof hum === 'number' ? hum.toFixed(0) : hum;
         }
 
         function updateStatus(online) {
@@ -224,19 +292,18 @@
                 renderDevice(currentDevice);
             }
 
-            // Let's use REST API
+            // Use new Convenience Endpoints
+            const action = newState ? 'on' : 'off';
             try {
-                const update = {};
-                update[key] = { state: newState };
-
-                await fetch(`${API_URL}/devices/${deviceId}/state`, {
-                    method: 'PUT',
+                const res = await fetch(`${API_URL}/devices/${deviceId}/relays/${key}/${action}`, {
+                    method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify(update)
+                    }
                 });
+
+                if (!res.ok) throw new Error("API Error");
+
             } catch (e) {
                 console.error("Toggle failed", e);
                 // Revert optimistic update
@@ -253,7 +320,91 @@
             window.location.href = 'index.html';
         }
 
-    </script>
-</body>
+        function switchDashTab(tab) {
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('tab-' + tab).classList.add('active');
 
-</html>
+            if (tab === 'controls') {
+                document.getElementById('view-controls').style.display = 'block';
+                document.getElementById('view-schedules').style.display = 'none';
+            } else {
+                document.getElementById('view-controls').style.display = 'none';
+                document.getElementById('view-schedules').style.display = 'block';
+                loadSchedules();
+            }
+        }
+
+        async function loadSchedules() {
+            const token = localStorage.getItem('access_token');
+            const list = document.getElementById('schedulesList');
+            list.innerHTML = '<p style="text-align:center; color:gray;">Loading...</p>';
+
+            try {
+                const res = await fetch(`${API_URL}/schedules/`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                list.innerHTML = '';
+                if (data.length === 0) {
+                    list.innerHTML = '<p style="text-align:center; color:gray;">No schedules set.</p>';
+                    return;
+                }
+
+                data.forEach(sch => {
+                    const item = document.createElement('div');
+                    item.className = 'device-status'; // reuse style
+                    item.style.justifyContent = 'space-between';
+                    item.innerHTML = `
+                        <div>
+                            <span style="font-weight:bold; font-size:1.2em;">${sch.time}</span>
+                            <span style="color:gray; font-size:0.9em;">
+                                ${formatRelayName(sch.relay_key)} -> 
+                                <span style="color:${sch.action ? '#10b981' : '#ef4444'}">${sch.action ? 'ON' : 'OFF'}</span>
+                            </span>
+                        </div>
+                        <button onclick="deleteSchedule(${sch.id})" style="background:none; border:none; cursor:pointer;">❌</button>
+                    `;
+                    list.appendChild(item);
+                });
+            } catch (e) {
+                console.error(e);
+                list.innerHTML = '<p style="color:red; text-align:center;">Error loading schedules.</p>';
+            }
+        }
+
+        function formatRelayName(key) {
+            const names = { 'relay1': 'Living Room', 'relay2': 'Bedroom', 'relay3': 'Kitchen', 'relay4': 'Fan' };
+            return names[key] || key;
+        }
+
+        async function addSchedule() {
+            const token = localStorage.getItem('access_token');
+            const time = document.getElementById('schTime').value;
+            const relay = document.getElementById('schDevice').value;
+            const action = document.getElementById('schAction').value === 'true';
+
+            if (!time) return alert("Please select a time");
+
+            try {
+                await fetch(`${API_URL}/schedules/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        device_id: currentDevice ? currentDevice.id : 'SH-001', // Fallback or use global
+                        relay_key: relay,
+                        action: action,
+                        time: time
+                    })
+                });
+                loadSchedules();
+            } catch (e) {
+                alert("Failed to save schedule");
+            }
+        }
+</body >
+
+</html >

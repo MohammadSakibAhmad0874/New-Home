@@ -17,12 +17,23 @@ services:
     ports:
       - "6379:6379"
 
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+
   nginx:
     image: nginx:latest
     ports:
       - "80:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/storage:/var/www/storage:ro
+      - ../cloud:/var/www/cloud:ro
     depends_on:
       - app
 
@@ -36,11 +47,75 @@ services:
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db/homecontrol
       - REDIS_URL=redis://redis:6379/0
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=HS256
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
     depends_on:
       - db
+      - redis
+      - rabbitmq
+
+  # --- Microservice Workers ---
+
+  worker_ai:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    command: celery -A worker.celery worker --loglevel=info -Q ai_queue -n worker_ai@%h
+    volumes:
+      - ./app:/app
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db/homecontrol
+      - REDIS_URL=redis://redis:6379/0
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+    depends_on:
+      - rabbitmq
+      - redis
+
+  worker_email:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    command: celery -A worker.celery worker --loglevel=info -Q email_queue -n worker_email@%h
+    volumes:
+      - ./app:/app
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db/homecontrol
+      - REDIS_URL=redis://redis:6379/0
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+    depends_on:
+      - rabbitmq
+      - redis
+
+  worker_video:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    command: celery -A worker.celery worker --loglevel=info -Q video_queue -n worker_video@%h
+    volumes:
+      - ./app:/app
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db/homecontrol
+      - REDIS_URL=redis://redis:6379/0
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+    depends_on:
+      - rabbitmq
+      - redis
+
+  worker_default:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    command: celery -A worker.celery worker --loglevel=info -Q default_queue,analytics_queue -n worker_default@%h
+    volumes:
+      - ./app:/app
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db/homecontrol
+      - REDIS_URL=redis://redis:6379/0
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+    depends_on:
+      - rabbitmq
       - redis
 
 volumes:

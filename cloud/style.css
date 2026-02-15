@@ -7,7 +7,6 @@
   padding: 0;
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
-  /* Remove tap highlight on mobile */
 }
 
 :root {
@@ -18,7 +17,6 @@
   --glass-bg: rgba(255, 255, 255, 0.05);
   --glass-border: rgba(255, 255, 255, 0.08);
   --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-  --start-glass: rgba(255, 255, 255, 0.03);
 
   --text-primary: #ffffff;
   --text-secondary: #9ca3af;
@@ -33,12 +31,9 @@
   /* Emerald */
   --accent-danger: #ef4444;
   /* Red */
-  --accent-warning: #f59e0b;
-  /* Amber */
 
   /* Gradients */
   --gradient-main: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
   --gradient-card: linear-gradient(145deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.03) 100%);
 
   --radius-lg: 24px;
@@ -102,6 +97,12 @@ h3 {
   -webkit-text-fill-color: transparent;
 }
 
+.nav-links {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
 /* Auth Pages */
 .auth-container {
   min-height: 100vh;
@@ -114,11 +115,94 @@ h3 {
 .auth-card {
   width: 100%;
   max-width: 400px;
-  background: var(--bg-secondary);
+  background: rgba(26, 30, 46, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   padding: 40px;
   box-shadow: var(--glass-shadow);
+  text-align: center;
+}
+
+.auth-logo {
+  margin-bottom: 30px;
+}
+
+.auth-logo .icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 10px;
+  filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.5));
+}
+
+/* Form Elements */
+.form-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+input {
+  width: 100%;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  color: white;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+/* Tabs */
+.auth-tabs {
+  display: flex;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 4px;
+  border-radius: var(--radius-md);
+  margin-bottom: 30px;
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all 0.3s;
+}
+
+.auth-tab.active {
+  background: var(--bg-secondary);
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.auth-form {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.auth-form.active {
+  display: block;
 }
 
 /* ==================== Components ==================== */
@@ -145,6 +229,11 @@ h3 {
   transform: scale(0.98);
 }
 
+.btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 .logout-btn {
   background: rgba(239, 68, 68, 0.1);
   color: var(--accent-danger);
@@ -156,12 +245,76 @@ h3 {
   transition: all 0.2s;
 }
 
-/* device Status Card */
-.device-status {
+.logout-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+/* Sensor Card */
+.sensor-card {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
   background: var(--gradient-card);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
-  padding: 20px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.sensor-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.sensor-icon {
+  font-size: 1.5em;
+  margin-bottom: 4px;
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.2));
+}
+
+.sensor-data {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+.sensor-value {
+  font-size: 2em;
+  font-weight: 700;
+  background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.sensor-unit {
+  font-size: 1em;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.sensor-label {
+  font-size: 0.85em;
+  color: var(--text-muted);
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.sensor-divider {
+  width: 1px;
+  height: 50px;
+  background: var(--glass-border);
+}
+
+/* Device Status Card */
+.device-status {
+  background: rgba(16, 185, 129, 0.05);
+  border: 1px solid rgba(16, 185, 129, 0.1);
+  border-radius: var(--radius-lg);
+  padding: 16px 24px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -169,10 +322,24 @@ h3 {
 }
 
 .status-dot {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   box-shadow: 0 0 10px currentColor;
+  position: relative;
+}
+
+.status-dot::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  opacity: 0.5;
+  animation: pulse 2s infinite;
 }
 
 .status-dot.online {
@@ -183,12 +350,13 @@ h3 {
 .status-dot.offline {
   background-color: var(--accent-danger);
   color: var(--accent-danger);
+  animation: none;
+  /* No pulse if offline */
 }
 
 /* Switch Controls Grid */
 .controls-grid {
   display: grid;
-  /* Adaptive Grid: 2 columns on mobile, auto-fit on desktop */
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 16px;
 }
@@ -202,8 +370,7 @@ h3 {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  height: 160px;
-  /* Fixed height for uniformity */
+  height: 170px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
@@ -213,6 +380,7 @@ h3 {
 .switch-card:hover {
   border-color: rgba(99, 102, 241, 0.3);
   transform: translateY(-4px);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .switch-card.active {
@@ -260,7 +428,7 @@ h3 {
   color: var(--accent-primary);
 }
 
-/* Toggle Switch (Visual Only, card click handles action) */
+/* Toggle Switch Visual */
 .switch-toggle {
   position: absolute;
   top: 20px;
@@ -292,12 +460,73 @@ h3 {
   transform: translateX(20px);
 }
 
-/* Mobile Bottom Navigation (Hidden on Desktop) */
-.mobile-nav {
-  display: none;
+/* Loading Overlay */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bg-primary);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
 }
 
-/* Responsive & Mobile Optimizations */
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(99, 102, 241, 0.3);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Animations */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mobile Bottom Navigation */
+.mobile-nav {
+  display: none;
+  /* Hidden on Desktop */
+}
+
+/* Responsive */
 @media (max-width: 768px) {
   .dashboard {
     padding: 16px;
@@ -306,18 +535,16 @@ h3 {
   .dash-header {
     border-radius: 0 0 var(--radius-lg) var(--radius-lg);
     margin: -16px -16px 24px -16px;
-    /* Flush with top */
     top: 0;
   }
 
-  .dash-header .nav-links {
+  .nav-links {
     display: none;
-    /* Hide top nav links on mobile */
   }
 
-  /* Grid: 2 columns, perfectly spaced */
   .controls-grid {
     grid-template-columns: 1fr 1fr;
+    /* 2 Columns */
     gap: 12px;
   }
 
@@ -326,7 +553,6 @@ h3 {
     padding: 16px;
   }
 
-  /* Bottom Navigation Bar */
   .mobile-nav {
     display: flex;
     position: fixed;
@@ -338,7 +564,6 @@ h3 {
     -webkit-backdrop-filter: blur(20px);
     border-top: 1px solid var(--glass-border);
     padding: 12px 20px 24px 20px;
-    /* Clean look with safe area */
     justify-content: space-around;
     z-index: 1000;
   }
@@ -360,6 +585,5 @@ h3 {
 
   .nav-icon {
     font-size: 1.4rem;
-    margin-bottom: 2px;
   }
 }

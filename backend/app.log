@@ -1,0 +1,200 @@
+app-1  | 2026-02-15 18:36:03,001 INFO sqlalchemy.engine.Engine show standard_conforming_strings
+app-1  | 2026-02-15 18:36:03,001 INFO sqlalchemy.engine.Engine [raw sql] ()
+app-1  | 2026-02-15 18:36:03,003 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+app-1  | 2026-02-15 18:36:03,013 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+app-1  | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+app-1  | WHERE pg_catalog.pg_class.relname = $1::VARCHAR AND pg_catalog.pg_class.relkind = ANY (ARRAY[$2::VARCHAR, $3::VARCHAR, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != $7::VARCHAR
+app-1  | 2026-02-15 18:36:03,013 INFO sqlalchemy.engine.Engine [generated in 0.00024s] ('users', 'r', 'p', 'f', 'v', 'm', 'pg_catalog')
+app-1  | 2026-02-15 18:36:03,026 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+app-1  | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+app-1  | WHERE pg_catalog.pg_class.relname = $1::VARCHAR AND pg_catalog.pg_class.relkind = ANY (ARRAY[$2::VARCHAR, $3::VARCHAR, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != $7::VARCHAR
+app-1  | 2026-02-15 18:36:03,026 INFO sqlalchemy.engine.Engine [cached since 0.01317s ago] ('devices', 'r', 'p', 'f', 'v', 'm', 'pg_catalog')
+app-1  | 2026-02-15 18:36:03,027 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+app-1  | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+app-1  | WHERE pg_catalog.pg_class.relname = $1::VARCHAR AND pg_catalog.pg_class.relkind = ANY (ARRAY[$2::VARCHAR, $3::VARCHAR, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != $7::VARCHAR
+app-1  | 2026-02-15 18:36:03,028 INFO sqlalchemy.engine.Engine [cached since 0.01487s ago] ('firmware', 'r', 'p', 'f', 'v', 'm', 'pg_catalog')
+app-1  | 2026-02-15 18:36:03,035 INFO sqlalchemy.engine.Engine COMMIT
+app-1  | INFO:     Application startup complete.
+app-1  | ✅ Database tables created.
+app-1  | 2026-02-15 18:36:05,495 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+app-1  | 2026-02-15 18:36:05,509 INFO sqlalchemy.engine.Engine SELECT users.id, users.email, users.hashed_password, users.is_active, users.is_superuser 
+app-1  | FROM users 
+app-1  | WHERE users.email = $1::VARCHAR
+app-1  | 2026-02-15 18:36:05,509 INFO sqlalchemy.engine.Engine [generated in 0.00028s] ('xgpigrlncp@test.com',)
+app-1  | 2026-02-15 18:36:05,681 INFO sqlalchemy.engine.Engine INSERT INTO users (email, hashed_password, is_active, is_superuser) VALUES ($1::VARCHAR, $2::VARCHAR, $3::BOOLEAN, $4::BOOLEAN) RETURNING users.id
+app-1  | 2026-02-15 18:36:05,681 INFO sqlalchemy.engine.Engine [generated in 0.00038s] ('xgpigrlncp@test.com', '$argon2id$v=19$m=65536,t=3,p=4$U0rpHUPo/Z8TorT2/v8fQw$pOrY5bBx/drXwiv39/b0+U85e/Aof4zaLGTdwbc5ACE', True, False)
+app-1  | 2026-02-15 18:36:05,686 INFO sqlalchemy.engine.Engine COMMIT
+app-1  | 2026-02-15 18:36:05,688 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+app-1  | 2026-02-15 18:36:05,690 INFO sqlalchemy.engine.Engine SELECT users.id, users.email, users.hashed_password, users.is_active, users.is_superuser 
+app-1  | FROM users 
+app-1  | WHERE users.id = $1::INTEGER
+app-1  | 2026-02-15 18:36:05,690 INFO sqlalchemy.engine.Engine [generated in 0.00034s] (5,)
+app-1  | INFO:     172.18.0.10:51550 - "POST /api/v1/users/ HTTP/1.0" 200 OK
+app-1  | 2026-02-15 18:36:05,696 INFO sqlalchemy.engine.Engine ROLLBACK
+app-1  | 2026-02-15 18:36:05,731 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+app-1  | 2026-02-15 18:36:05,731 INFO sqlalchemy.engine.Engine SELECT users.id, users.email, users.hashed_password, users.is_active, users.is_superuser 
+app-1  | FROM users 
+app-1  | WHERE users.email = $1::VARCHAR
+app-1  | 2026-02-15 18:36:05,732 INFO sqlalchemy.engine.Engine [cached since 0.2229s ago] ('xgpigrlncp@test.com',)
+app-1  | INFO:     172.18.0.10:51562 - "POST /api/v1/login/access-token HTTP/1.0" 200 OK
+app-1  | 2026-02-15 18:36:05,895 INFO sqlalchemy.engine.Engine ROLLBACK
+app-1  | 2026-02-15 18:36:05,915 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+app-1  | 2026-02-15 18:36:05,919 INFO sqlalchemy.engine.Engine SELECT users.id, users.email, users.hashed_password, users.is_active, users.is_superuser 
+app-1  | FROM users 
+app-1  | WHERE users.id = $1::INTEGER
+app-1  | 2026-02-15 18:36:05,919 INFO sqlalchemy.engine.Engine [generated in 0.00039s] (5,)
+app-1  | 2026-02-15 18:36:05,936 INFO sqlalchemy.engine.Engine SELECT devices.id, devices.owner_id, devices.name, devices.type, devices.api_key, devices.online, devices.last_seen, devices.ip_address, devices.temperature, devices.humidity, devices.start_state 
+app-1  | FROM devices 
+app-1  | WHERE devices.id = $1::VARCHAR
+app-1  | 2026-02-15 18:36:05,936 INFO sqlalchemy.engine.Engine [generated in 0.00035s] ('SH-EBOQH',)
+app-1  | 2026-02-15 18:36:05,944 INFO sqlalchemy.engine.Engine ROLLBACK
+app-1  | INFO:     172.18.0.10:51572 - "POST /api/v1/devices/ HTTP/1.0" 500 Internal Server Error
+app-1  | ERROR:    Exception in ASGI application
+app-1  | Traceback (most recent call last):
+app-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 526, in _prepare_and_execute
+app-1  |     prepared_stmt, attributes = await adapt_connection._prepare(
+app-1  |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 773, in _prepare
+app-1  |     prepared_stmt = await self._connection.prepare(
+app-1  |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app-1  |   File "/usr/local/lib/python3.11/site-packages/asyncpg/connection.py", line 638, in prepare
+app-1  |     return await self._prepare(
+app-1  |            ^^^^^^^^^^^^^^^^^^^^
+app-1  |   File "/usr/local/lib/python3.11/site-packages/asyncpg/connection.py", line 657, in _prepare
+app-1  |     stmt = await self._get_statement(
+app-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+app-1  |   File "/usr/local/lib/python3.11/site-packages/asyncpg/connection.py", line 443, in _get_statement
+app-1  |     statement = await self._protocol.prepare(
+app-1  |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app-1  |   File "asyncpg/protocol/protocol.pyx", line 165, in prepare
+app-1  | asyncpg.exceptions.UndefinedColumnError: column devices.temperature does not exist
+app-1  | 
+app-1  | The above exception was the direct cause of the following exception:
+app-1  | 
+app-1  | Traceback (most recent call last):
+app-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+app-1  |     self.dialect.do_execute(
+app-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+app-1  |     cursor.execute(statement, parameters)
+app-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 585, in execute
+app-1  |     self._adapt_connection.await_(
+app-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+app-1  |     return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+app-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+app-1  |     value = await result
+app-1  |             ^^^^^^^^^^^^
+app-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 563, in _prepare_and_execute
+app-1  |     self._handle_exception(error)
+app-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 513, in _handle_exception
+app-1  |     self._adapt_connection._handle_exception(error)
+app-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 797, in _handle_exception
+app-1  |     raise translated_error from error
+app-1  | sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi.ProgrammingError: <class 'asyncpg.exceptions.UndefinedColumnError'>: column devices.temperature does not exist
+app-1  | 
+app-1  | The above exception was the direct cause of the following exception:
+app-1  | 
+app-1  | Traceback (most recent call last):
+app-1  |   File "/usr/local/lib/python3.11/site-packages/uvicorn/protocols/http/h11_impl.py", line 410, in run_asgi
+app-1  |     result = await app(  # type: ignore[func-returns-value]
+app-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app-1  |   File "/usr/local/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+app-1  |     return await self.app(scope, receive, send)
+app-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/applications.py", line 1134, in __call__
+app-1  |     await super().__call__(scope, receive, send)
+app-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/applications.py", line 107, in __call__
+app-1  |     await self.middleware_stack(scope, receive, send)
+app-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/errors.py", line 186, in __call__
+app-1  |     raise exc
+app-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/errors.py", line 164, in __call__
+app-1  |     await self.app(scope, receive, _send)
+app-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/cors.py", line 87, in __call__
+app-1  |     await self.app(scope, receive, send)
+app-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+app-1  |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+app-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+app-1  |     raise exc
+app-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+app-1  |     await app(scope, receive, sender)
+app-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+app-1  |     await self.app(scope, receive, send)
+app-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 716, in __call__
+app-1  |     await self.middleware_stack(scope, receive, send)
+app-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 736, in app
+app-1  |     await route.handle(scope, receive, send)
+app-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 290, in handle
+app-1  |     await self.app(scope, receive, send)
+app-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 119, in app
+app-1  |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+app-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+app-1  |     raise exc
+app-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+app-1  |     await app(scope, receive, sender)
+app-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 105, in app
+app-1  |     response = await f(request)
+app-1  |                ^^^^^^^^^^^^^^^^
+app-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 424, in app
+app-1  |     raw_response = await run_endpoint_function(
+app-1  |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 312, in run_endpoint_function
+app-1  |     return await dependant.call(**values)
+app-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app-1  |   File "/app/api/api_v1/endpoints/devices.py", line 39, in create_device
+app-1  |     result = await db.execute(select(Device).filter(Device.id == device_in.id))
+app-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/ext/asyncio/session.py", line 449, in execute
+app-1  |     result = await greenlet_spawn(
+app-1  |              ^^^^^^^^^^^^^^^^^^^^^
+app-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 201, in greenlet_spawn
+app-1  |     result = context.throw(*sys.exc_info())
+app-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
+app-1  |     return self._execute_internal(
+app-1  |            ^^^^^^^^^^^^^^^^^^^^^^^
+app-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2249, in _execute_internal
+app-1  |     result: Result[Any] = compile_state_cls.orm_execute_statement(
+app-1  |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/context.py", line 306, in orm_execute_statement
+app-1  |     result = conn.execute(
+app-1  |              ^^^^^^^^^^^^^
+app-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1419, in execute
+app-1  |     return meth(
+app-1  |            ^^^^^
+app-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/elements.py", line 527, in _execute_on_connection
+app-1  |     return connection._execute_clauseelement(
+app-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1641, in _execute_clauseelement
+app-1  |     ret = self._execute_context(
+app-1  |           ^^^^^^^^^^^^^^^^^^^^^^
+app-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+app-1  |     return self._exec_single_context(
+app-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+app-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+app-1  |     self._handle_dbapi_exception(
+app-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2363, in _handle_dbapi_exception
+app-1  |     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+app-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+app-1  |     self.dialect.do_execute(
+app-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+app-1  |     cursor.execute(statement, parameters)
+app-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 585, in execute
+app-1  |     self._adapt_connection.await_(
+app-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+app-1  |     return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+app-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+app-1  |     value = await result
+app-1  |             ^^^^^^^^^^^^
+app-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 563, in _prepare_and_execute
+app-1  |     self._handle_exception(error)
+app-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 513, in _handle_exception
+app-1  |     self._adapt_connection._handle_exception(error)
+app-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 797, in _handle_exception
+app-1  |     raise translated_error from error
+app-1  | sqlalchemy.exc.ProgrammingError: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedColumnError'>: column devices.temperature does not exist
+app-1  | [SQL: SELECT devices.id, devices.owner_id, devices.name, devices.type, devices.api_key, devices.online, devices.last_seen, devices.ip_address, devices.temperature, devices.humidity, devices.start_state 
+app-1  | FROM devices 
+app-1  | WHERE devices.id = $1::VARCHAR]
+app-1  | [parameters: ('SH-EBOQH',)]
+app-1  | (Background on this error at: https://sqlalche.me/e/20/f405)

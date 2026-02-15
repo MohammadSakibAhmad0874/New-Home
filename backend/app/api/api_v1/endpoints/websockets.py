@@ -1,5 +1,5 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
-from typing import Any
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Query, status
+from typing import Any, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from datetime import datetime
@@ -8,6 +8,7 @@ import json
 from db.session import get_db
 from db.models import Device
 from core.websocket import manager
+from api import deps
 
 router = APIRouter()
 
@@ -15,11 +16,58 @@ router = APIRouter()
 async def websocket_endpoint(
     websocket: WebSocket,
     device_id: str,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    token: Optional[str] = Query(None),
+    api_key: Optional[str] = Query(None)
 ):
     """
     WebSocket endpoint for Devices and Frontend clients.
+    Secure: Requires either 'token' (User) or 'api_key' (Device).
+    Device can also use 'Authorization' header.
     """
+    # 1. Authenticate
+    is_device = False
+    
+    # Check headers for Device Auth (standard for some clients)
+    auth_header = websocket.headers.get("Authorization")
+    if auth_header and not api_key:
+        try:
+            scheme, key = auth_header.split()
+            if scheme.lower() == "bearer":
+                api_key = key
+        except:
+            pass
+            
+    if api_key:
+        # Validate Device Key
+        result = await db.execute(select(Device).filter(Device.api_key == api_key))
+        device = result.scalars().first()
+        if not device or device.id != device_id:
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+            return
+        is_device = True
+        
+    elif token:
+        # Validate User Token
+        try:
+            # We can reuse the dependency logic manually
+            # But get_current_user is async and takes Depends... 
+            # Easier to just replicate the decode logic or call a helper
+            from jose import jwt
+            from core.config import settings
+            
+            payload = jwt.decode(
+                token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+            )
+            # Valid token
+        except Exception:
+             await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+             return
+    else:
+        # No auth
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return
+
     await manager.connect(websocket, device_id)
     try:
         while True:
@@ -56,7 +104,30 @@ async def websocket_endpoint(
                         db.add(device)
                         await db.commit()
 
-                # 3. Command from Frontend (User toggled switch on UI)
+                # 3. Sensor Update from Device (Temperature/Humidity)
+                elif msg_type == "sensor_update":
+                    sensor_data = message.get("data", {})
+                    # Broadcast to Frontend
+                    await manager.broadcast(device_id, {"type": "sensor_update", "data": sensor_data})
+                    
+                    # Update DB
+                    try:
+                        result = await db.execute(select(Device).filter(Device.id == device_id))
+                        device = result.scalars().first()
+                        if device:
+                            if "temperature" in sensor_data:
+                                device.temperature = float(sensor_data["temperature"])
+                            if "humidity" in sensor_data:
+                                device.humidity = float(sensor_data["humidity"])
+                            device.last_seen = datetime.now() # Use naive datetime or aware based on config
+                            # device.last_seen = datetime.utcnow() # Deprecated in Python 3.12+
+                            # Using server_default func.now() usually handles it
+                            db.add(device)
+                            await db.commit()
+                    except Exception as e:
+                        print(f"Error updating sensor data: {e}")
+
+                # 4. Command from Frontend (User toggled switch on UI)
                 elif msg_type == "command":
                     # Broadcast to Device (and other frontends)
                     # {"type": "command", "data": {"relay1": {"state": true}}}

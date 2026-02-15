@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text, DateTime, JSON, LargeBinary
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text, DateTime, JSON, LargeBinary, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from db.session import Base
@@ -22,10 +22,15 @@ class Device(Base):
     owner_id = Column(Integer, ForeignKey("users.id"))
     name = Column(String, index=True)
     type = Column(String, default="esp32")
+    api_key = Column(String, unique=True, index=True) # Nullable removed
     
     online = Column(Boolean, default=False)
     last_seen = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     ip_address = Column(String, nullable=True)
+    
+    # Sensors
+    temperature = Column(Float, nullable=True)
+    humidity = Column(Float, nullable=True)
     
     # Store relay state as JSON: {"relay1": {"state": true}, ...}
     start_state = Column(JSON, default={})
