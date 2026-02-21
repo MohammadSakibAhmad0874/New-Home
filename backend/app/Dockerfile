@@ -27,4 +27,5 @@ RUN pip install --upgrade pip \
 COPY . .
 
 # Use shell form to allow variable expansion for PORT
-CMD sh -c "gunicorn -w 4 -k uvicorn.workers.UvicornWorker main:app --bind 0.0.0.0:${PORT:-8000}"
+CMD sh -c "gunicorn -w 2 -k uvicorn.workers.UvicornWorker main:app --bind 0.0.0.0:${PORT:-8000} --timeout 120"
+

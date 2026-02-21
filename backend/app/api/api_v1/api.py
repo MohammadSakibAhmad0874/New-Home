@@ -1,3 +1,4 @@
+from fastapi import APIRouter
 from api.api_v1.endpoints import auth, users, devices, websockets, integrations, firmware, services, schedules, stats
 
 api_router = APIRouter()
