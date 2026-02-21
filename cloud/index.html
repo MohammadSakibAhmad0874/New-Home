@@ -58,13 +58,13 @@
             --text-input: #1e293b;
             --shadow-card: 0 30px 70px -15px rgba(99, 102, 241, 0.15), 0 0 0 1px rgba(99, 102, 241, 0.06);
             --shadow-btn: 0 4px 24px rgba(99, 102, 241, 0.3);
-            --orb-1: rgba(15, 23, 42, 0.09);
-            --orb-2: rgba(99, 102, 241, 0.1);
-            --orb-3: rgba(236, 72, 153, 0.07);
-            --orb-4: rgba(20, 30, 48, 0.06);
-            --orb-5: rgba(139, 92, 246, 0.08);
-            --particle-color: rgba(15, 23, 42, 0.2);
-            --grid-opacity: 0.08;
+            --orb-1: rgba(15, 23, 42, 0.22);
+            --orb-2: rgba(30, 0, 80, 0.18);
+            --orb-3: rgba(10, 10, 40, 0.15);
+            --orb-4: rgba(50, 20, 80, 0.12);
+            --orb-5: rgba(20, 10, 60, 0.14);
+            --particle-color: rgba(15, 23, 42, 0.35);
+            --grid-opacity: 0.12;
             --toggle-bg: rgba(99, 102, 241, 0.1);
             --toggle-icon: "☀️";
         }
@@ -98,7 +98,7 @@
             background-attachment: fixed;
         }
 
-        /* Light mode dreamy gradient */
+        /* Light mode dreamy gradient with dark depth */
         [data-theme="light"] body {
             background:
                 radial-gradient(ellipse at 15% 15%, rgba(199, 210, 254, 0.6) 0%, transparent 50%),
@@ -106,6 +106,95 @@
                 radial-gradient(ellipse at 50% 50%, rgba(224, 231, 255, 0.4) 0%, transparent 60%),
                 linear-gradient(135deg, #f5f3ff 0%, #eef2ff 25%, #fdf2f8 50%, #eff6ff 75%, #f5f3ff 100%);
             background-attachment: fixed;
+        }
+
+        /* ============= Dark Decorative Elements (Light Mode) ============= */
+        .dark-decor {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        [data-theme="light"] .dark-decor {
+            display: block;
+        }
+
+        .decor-ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 1.5px solid rgba(15, 23, 42, 0.06);
+            animation: floatSlow 30s ease-in-out infinite;
+        }
+
+        .decor-ring-1 {
+            width: 500px;
+            height: 500px;
+            top: -10%;
+            right: -8%;
+            border-width: 2px;
+            border-color: rgba(15, 23, 42, 0.08);
+        }
+
+        .decor-ring-2 {
+            width: 350px;
+            height: 350px;
+            bottom: -5%;
+            left: -5%;
+            animation-delay: -10s;
+            border-color: rgba(99, 102, 241, 0.08);
+        }
+
+        .decor-ring-3 {
+            width: 200px;
+            height: 200px;
+            top: 20%;
+            left: 15%;
+            animation-delay: -20s;
+            animation-duration: 25s;
+            border-color: rgba(15, 23, 42, 0.05);
+        }
+
+        .decor-line {
+            position: absolute;
+            background: linear-gradient(180deg, transparent, rgba(15, 23, 42, 0.04), transparent);
+        }
+
+        .decor-line-1 {
+            width: 1px;
+            height: 100%;
+            left: 15%;
+        }
+
+        .decor-line-2 {
+            width: 1px;
+            height: 100%;
+            right: 20%;
+        }
+
+        .decor-line-3 {
+            width: 100%;
+            height: 1px;
+            top: 30%;
+            background: linear-gradient(90deg, transparent, rgba(15, 23, 42, 0.04), transparent);
+        }
+
+        @keyframes floatSlow {
+
+            0%,
+            100% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+
+            33% {
+                transform: translate(30px, -20px) rotate(5deg);
+            }
+
+            66% {
+                transform: translate(-20px, 30px) rotate(-3deg);
+            }
         }
 
         /* ============= Animated Background ============= */
@@ -694,6 +783,16 @@
         <div class="orb orb-5"></div>
     </div>
     <div class="grid-pattern"></div>
+
+    <!-- Dark Decorative Elements (visible in light mode only) -->
+    <div class="dark-decor">
+        <div class="decor-ring decor-ring-1"></div>
+        <div class="decor-ring decor-ring-2"></div>
+        <div class="decor-ring decor-ring-3"></div>
+        <div class="decor-line decor-line-1"></div>
+        <div class="decor-line decor-line-2"></div>
+        <div class="decor-line decor-line-3"></div>
+    </div>
 
     <!-- Floating Particles -->
     <div class="particles" id="particles"></div>
