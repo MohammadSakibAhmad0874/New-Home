@@ -8,11 +8,11 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@db/homecontrol"
     
-    # Redis
-    REDIS_URL: str = "redis://redis:6379/0"
+    # Redis (optional — not needed for free deployment)
+    REDIS_URL: str = ""
     
-    # RabbitMQ
-    RABBITMQ_URL: str = "amqp://guest:guest@rabbitmq:5672/"
+    # RabbitMQ (optional — not needed for free deployment)
+    RABBITMQ_URL: str = ""
     
     # Security
     SECRET_KEY: str = "supersecretkey_change_me_in_production"
