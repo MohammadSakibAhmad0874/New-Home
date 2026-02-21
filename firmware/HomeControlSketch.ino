@@ -25,7 +25,8 @@
 #include <ESPmDNS.h>
 #endif
 
-#include "firebaseSync.h"
+// #include "firebaseSync.h"
+#include "websocketSync.h" // Requires ArduinoWebsockets library
 
 WebServer server(WEB_SERVER_PORT);
 
@@ -61,6 +62,89 @@ void startMDNS() {
 /*
  * Setup Function - Runs once at startup
  */
+#include <HTTPUpdate.h>
+#include <HTTPClient.h>
+
+// Current Firmware Version
+const char* CURRENT_VERSION = "1.0.0";
+
+void checkForUpdates() {
+  if (WiFi.status() != WL_CONNECTED) return;
+
+  #if ENABLE_SERIAL_DEBUG
+  Serial.println("Checking for firmware updates...");
+  #endif
+  
+  WiFiClientSecure client;
+  client.setInsecure(); // Skip cert validation for simplicity
+  
+  HTTPClient http;
+  // Construct URL
+  String protocol = BACKEND_SECURE ? "https://" : "http://";
+  String portStr = (BACKEND_PORT == 80 || BACKEND_PORT == 443) ? "" : ":" + String(BACKEND_PORT);
+  String url = protocol + String(BACKEND_HOST) + portStr + "/api/v1/firmware/check?current_version=" + CURRENT_VERSION + "&api_key=" + String(DEVICE_API_KEY);
+  
+  if (http.begin(client, url)) {
+    int httpCode = http.GET();
+    if (httpCode == HTTP_CODE_OK) {
+      String payload = http.getString();
+      #if ENABLE_SERIAL_DEBUG
+      Serial.println("Update Info: " + payload);
+      #endif
+      
+      if (payload.indexOf("\"url\"") > 0) {
+          int urlStart = payload.indexOf("\"url\":") + 6;
+          while(payload[urlStart] != '"') urlStart++;
+          urlStart++;
+          
+          int urlEnd = payload.indexOf("\"", urlStart);
+          String downloadUrl = payload.substring(urlStart, urlEnd);
+          
+          if (downloadUrl.startsWith("/")) {
+             downloadUrl = protocol + String(BACKEND_HOST) + portStr + downloadUrl;
+          }
+          
+          #if ENABLE_SERIAL_DEBUG
+          Serial.println("New firmware found! Downloading from: " + downloadUrl);
+          #endif
+          
+          t_httpUpdate_return ret = httpUpdate.update(client, downloadUrl);
+          
+          switch (ret) {
+            case HTTP_UPDATE_FAILED:
+              #if ENABLE_SERIAL_DEBUG
+              Serial.printf("HTTP_UPDATE_FAILD Error (%d): %s\n", httpUpdate.getLastError(), httpUpdate.getLastErrorString().c_str());
+              #endif
+              break;
+            case HTTP_UPDATE_NO_UPDATES:
+              #if ENABLE_SERIAL_DEBUG
+              Serial.println("HTTP_UPDATE_NO_UPDATES");
+              #endif
+              break;
+            case HTTP_UPDATE_OK:
+              #if ENABLE_SERIAL_DEBUG
+              Serial.println("HTTP_UPDATE_OK");
+              #endif
+              break;
+          }
+      } else {
+        #if ENABLE_SERIAL_DEBUG
+        Serial.println("No update available.");
+        #endif
+      }
+    } else {
+      #if ENABLE_SERIAL_DEBUG
+      Serial.printf("Check failed, error: %s\n", http.errorToString(httpCode).c_str());
+      #endif
+    }
+    http.end();
+  } else {
+      #if ENABLE_SERIAL_DEBUG
+      Serial.println("Unable to connect to update server");
+      #endif
+  }
+}
+
 void setup() {
   // Initialize serial communication
   #if ENABLE_SERIAL_DEBUG
@@ -74,6 +158,9 @@ void setup() {
   // Initialize relay control
   initRelays();
   
+  // Init Sensor
+  dht.begin();
+  
   // WiFi Setup with captive portal
   #if ENABLE_CAPTIVE_PORTAL
   setupWiFiWithPortal();
@@ -86,8 +173,9 @@ void setup() {
   // Start mDNS for device discovery (only when connected to WiFi)
   if (!portalActive && wifiConnected) {
     startMDNS();
-    // Start Firebase cloud sync
-    initFirebaseSync();
+  // Start Cloud Sync (WebSocket)
+    checkForUpdates();
+    initWebSocket();
   }
   
   // Setup web server routes
@@ -129,6 +217,12 @@ void setup() {
 /*
  * Main Loop - Runs continuously
  */
+#include <DHT.h>
+
+DHT dht(DHT_PIN, DHT_TYPE);
+unsigned long lastSensorRead = 0;
+const long SENSOR_INTERVAL = 30000; // 30 seconds
+
 void loop() {
   // Handle web server requests
   server.handleClient();
@@ -136,8 +230,35 @@ void loop() {
   // Handle DNS for captive portal
   handlePortalDNS();
   
-  // Firebase cloud sync (poll for remote commands)
+  // WebSocket cloud sync (poll for remote commands)
   cloudSyncLoop();
+  
+  // Sensor Read Loop
+  if (millis() - lastSensorRead > SENSOR_INTERVAL) {
+      lastSensorRead = millis();
+      // Read DHT
+      float h = dht.readHumidity();
+      float t = dht.readTemperature(); // Celsius
+      
+      #if ENABLE_SERIAL_DEBUG
+      if (isnan(h) || isnan(t)) {
+        Serial.println(F("Failed to read from DHT sensor!"));
+      } else {
+        Serial.print(F("Humidity: "));
+        Serial.print(h);
+        Serial.print(F("%  Temperature: "));
+        Serial.print(t);
+        Serial.println(F("°C"));
+        
+        // Send to Backend
+        sendSensorData(t, h);
+      }
+      #endif
+      
+      if (!isnan(h) && !isnan(t)) {
+         sendSensorData(t, h);
+      }
+  }
   
   // Check WiFi connection (reconnect if lost)
   if (!portalActive && wifiConnected && WiFi.status() != WL_CONNECTED) {
@@ -328,8 +449,8 @@ void handleSaveWiFi() {
     // Start mDNS for device discovery
     startMDNS();
     
-    // Start Firebase cloud sync
-    initFirebaseSync();
+    // Start Cloud Sync (WebSocket)
+    initWebSocket();
     
     #if ENABLE_SERIAL_DEBUG
     Serial.println("\n✓ Connected! WiFi IP: " + ip);

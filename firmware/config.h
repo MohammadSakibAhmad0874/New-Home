@@ -26,6 +26,13 @@ const char* HOTSPOT_PASSWORD = "12345678";  // Change this!
 const char* DEVICE_NAME = "SmartHome";
 const int WEB_SERVER_PORT = 80;
 
+// ============= Backend Configuration =============
+const char* BACKEND_HOST = "soign-ulises-fatigueless.ngrok-free.dev"; // Ngrok Public URL
+const int   BACKEND_PORT = 443;             // 80 for HTTP, 443 for HTTPS
+const char* DEVICE_ID = "SH-001";           // Must match DB
+const char* DEVICE_API_KEY = "ADlxGXNKqd7OAcSyN-c0damZO_lP92jN2r6bGdxcAGg"; // From POST /devices/
+const bool  BACKEND_SECURE = true;          // true = wss://, false = ws://
+
 // ============= GPIO Pin Configuration =============
 // Customize these pins based on your wiring
 const int RELAY_PIN_1 = 23;  // Switch 1
@@ -57,6 +64,12 @@ const unsigned long WIFI_TIMEOUT = 20000;  // 20 seconds
 // Access your device from any browser on any device: http://smarthome.local
 // Change the hostname below to customize the URL
 const char* MDNS_HOSTNAME = "smarthome";  // → http://smarthome.local
+
+// ============= Sensor Configuration =============
+// DHT11 or DHT22 Temperature/Humidity Sensor
+#define ENABLE_DHT true
+const int DHT_PIN = 4;
+#define DHT_TYPE DHT11 // Set to DHT22 if using that version
 
 // ============= Switch Names (for web interface) =============
 const char* SWITCH_1_NAME = "Living Room";
