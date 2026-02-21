@@ -26,3 +26,13 @@ databases:
     plan: free
     region: oregon
 
+staticSites:
+  - type: static
+    name: homecontrol-cloud
+    buildCommand: echo "No build needed"
+    staticPublishPath: ./cloud
+    pullRequestPreviewsEnabled: false
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
