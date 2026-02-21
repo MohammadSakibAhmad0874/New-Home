@@ -73,9 +73,236 @@ body {
 }
 
 [data-theme="light"] body {
-  background-image:
-    radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
-    radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.06) 0%, transparent 40%);
+  background:
+    linear-gradient(135deg,
+      #e0e7ff 0%,
+      #f0e6ff 15%,
+      #fdf2f8 30%,
+      #f5f3ff 50%,
+      #ede9fe 65%,
+      #e0e7ff 80%,
+      #dbeafe 100%);
+  background-size: 400% 400%;
+  animation: lightGradientShift 20s ease infinite;
+}
+
+@keyframes lightGradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  25% {
+    background-position: 50% 0%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  75% {
+    background-position: 50% 100%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* ===== Animated Background Orbs ===== */
+.bg-orbs {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+/* Dark mode orbs — subtle purple/indigo */
+.orb-1 {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, transparent 70%);
+  top: -10%;
+  left: -5%;
+  animation: orbFloat1 25s ease-in-out infinite;
+}
+
+.orb-2 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+  top: 60%;
+  right: -8%;
+  animation: orbFloat2 30s ease-in-out infinite;
+}
+
+.orb-3 {
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 70%);
+  bottom: -5%;
+  left: 30%;
+  animation: orbFloat3 22s ease-in-out infinite;
+}
+
+.orb-4 {
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.1) 0%, transparent 70%);
+  top: 30%;
+  left: 60%;
+  animation: orbFloat4 28s ease-in-out infinite;
+}
+
+.orb-5 {
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(79, 70, 229, 0.1) 0%, transparent 70%);
+  top: 10%;
+  right: 30%;
+  animation: orbFloat5 35s ease-in-out infinite;
+}
+
+/* Light mode orbs — vibrant colorful blobs */
+[data-theme="light"] .orb {
+  opacity: 1;
+}
+
+[data-theme="light"] .orb-1 {
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(129, 140, 248, 0.35) 0%, rgba(99, 102, 241, 0.1) 40%, transparent 70%);
+  filter: blur(100px);
+}
+
+[data-theme="light"] .orb-2 {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(192, 132, 252, 0.3) 0%, rgba(167, 139, 250, 0.1) 40%, transparent 70%);
+  filter: blur(90px);
+}
+
+[data-theme="light"] .orb-3 {
+  width: 450px;
+  height: 450px;
+  background: radial-gradient(circle, rgba(244, 114, 182, 0.25) 0%, rgba(236, 72, 153, 0.08) 40%, transparent 70%);
+  filter: blur(110px);
+}
+
+[data-theme="light"] .orb-4 {
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(circle, rgba(96, 165, 250, 0.3) 0%, rgba(59, 130, 246, 0.1) 40%, transparent 70%);
+  filter: blur(95px);
+}
+
+[data-theme="light"] .orb-5 {
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle, rgba(52, 211, 153, 0.2) 0%, rgba(16, 185, 129, 0.07) 40%, transparent 70%);
+  filter: blur(105px);
+}
+
+@keyframes orbFloat1 {
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  25% {
+    transform: translate(80px, 60px) scale(1.1);
+  }
+
+  50% {
+    transform: translate(30px, 120px) scale(0.95);
+  }
+
+  75% {
+    transform: translate(-40px, 50px) scale(1.05);
+  }
+}
+
+@keyframes orbFloat2 {
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  33% {
+    transform: translate(-70px, -50px) scale(1.08);
+  }
+
+  66% {
+    transform: translate(-30px, -100px) scale(0.92);
+  }
+}
+
+@keyframes orbFloat3 {
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  25% {
+    transform: translate(60px, -40px) scale(1.12);
+  }
+
+  50% {
+    transform: translate(100px, -80px) scale(0.9);
+  }
+
+  75% {
+    transform: translate(40px, -30px) scale(1.05);
+  }
+}
+
+@keyframes orbFloat4 {
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate(-90px, 70px) scale(1.15);
+  }
+}
+
+@keyframes orbFloat5 {
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  33% {
+    transform: translate(50px, -60px) scale(0.95);
+  }
+
+  66% {
+    transform: translate(-60px, 40px) scale(1.1);
+  }
+}
+
+/* Make dashboard content sit above orbs */
+.dashboard,
+.loading-overlay {
+  position: relative;
+  z-index: 1;
 }
 
 /* Headings */
