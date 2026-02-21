@@ -48,6 +48,18 @@ class Firmware(Base):
     # Store binary data directly in DB for simplicity
     data = Column(LargeBinary)
 
+class Schedule(Base):
+    __tablename__ = "schedules"
+
+    id = Column(Integer, primary_key=True, index=True)
+    device_id = Column(String, ForeignKey("devices.id"), index=True)
+    relay_key = Column(String, nullable=False)
+    action = Column(Boolean, default=True)
+    time = Column(String, nullable=False)  # HH:MM format
+    is_active = Column(Boolean, default=True)
+
+    device = relationship("Device")
+
 class SensorReading(Base):
     __tablename__ = "sensor_readings"
 
@@ -59,5 +71,6 @@ class SensorReading(Base):
     
     device = relationship("Device", back_populates="readings")
 
-# Update Device relationship
+# Update Device relationships
+Device.owner = relationship("User", back_populates="devices")
 Device.readings = relationship("SensorReading", back_populates="device", cascade="all, delete-orphan")
