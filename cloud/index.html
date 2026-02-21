@@ -26,26 +26,28 @@
         }
     </script>
     <style>
-        /* Hide body until we confirm not logged in */
         body {
-            visibility: hidden;
-            opacity: 0;
-            transition: opacity 0.5s ease;
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
     </style>
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            if (!localStorage.getItem('access_token')) {
-                document.body.style.visibility = "visible";
-                document.body.style.opacity = "1";
-            }
-        });
-
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js')
-                .then(() => console.log('Service Worker Registered'));
+                .then(() => console.log('Service Worker Registered'))
+                .catch(() => console.log('SW not found, skipping'));
         }
     </script>
+
 
     <!-- Login/Register UI -->
     <div class="auth-container" style="max-width: 440px; margin: 60px auto; padding: 0 20px;">
