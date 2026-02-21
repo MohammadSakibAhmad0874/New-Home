@@ -9,6 +9,11 @@
     <meta name="description" content="Control your ESP32 Smart Home switches from anywhere">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Restore theme BEFORE page renders to avoid flash
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
 </head>
 
 <body>
@@ -26,6 +31,8 @@
                 <p style="color:var(--text-secondary); font-size:0.9rem;">Welcome, <span id="userName">User</span></p>
             </div>
             <div class="nav-links">
+                <button class="theme-toggle-btn" id="themeToggle" onclick="toggleTheme()"
+                    title="Toggle theme">🌙</button>
                 <button class="logout-btn" onclick="logout()">Sign Out</button>
             </div>
         </div>
@@ -62,10 +69,11 @@
         </div>
 
         <!-- Tabs -->
-        <div style="display:flex; gap:10px; margin-bottom:20px;">
+        <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap: wrap;">
             <button class="auth-tab active" id="tab-controls" onclick="switchDashTab('controls')">Controls</button>
             <button class="auth-tab" id="tab-schedules" onclick="switchDashTab('schedules')">Schedules</button>
             <button class="auth-tab" id="tab-stats" onclick="switchDashTab('stats')">Stats</button>
+            <button class="auth-tab" id="tab-settings" onclick="switchDashTab('settings')">⚙️ Settings</button>
         </div>
 
         <!-- Controls View -->
@@ -117,6 +125,59 @@
             </div>
         </div>
 
+        <!-- Settings View -->
+        <div id="view-settings" style="display:none;">
+            <!-- Device Info -->
+            <div class="settings-section">
+                <h3>📡 Device Info</h3>
+                <div class="settings-row">
+                    <span class="settings-label">Device ID</span>
+                    <span class="settings-value" id="settingsDeviceId">--</span>
+                </div>
+                <div class="settings-row">
+                    <span class="settings-label">Device Name</span>
+                    <span class="settings-value" id="settingsDeviceName">--</span>
+                </div>
+                <div class="settings-row">
+                    <span class="settings-label">Status</span>
+                    <span class="uptime-badge offline" id="settingsStatusBadge">⚫ Offline</span>
+                </div>
+                <div class="settings-row">
+                    <span class="settings-label">Online Since</span>
+                    <span class="settings-value" id="settingsOnlineSince">--</span>
+                </div>
+                <div class="settings-row">
+                    <span class="settings-label">Uptime</span>
+                    <span class="settings-value" id="settingsUptime">--</span>
+                </div>
+            </div>
+
+            <!-- Button Names Manager -->
+            <div class="settings-section">
+                <h3>✏️ Customize Button Names</h3>
+                <div id="buttonNamesEditor">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Activity Log -->
+            <div class="settings-section">
+                <h3>📋 Activity Log</h3>
+                <div id="activityLog">
+                    <p style="color:var(--text-muted); font-size:0.9rem;">No activity yet</p>
+                </div>
+            </div>
+
+            <!-- Appearance -->
+            <div class="settings-section">
+                <h3>🎨 Appearance</h3>
+                <div class="settings-row">
+                    <span class="settings-label">Theme</span>
+                    <button class="theme-toggle-btn" onclick="toggleTheme()" id="settingsThemeBtn">🌙</button>
+                </div>
+            </div>
+        </div>
+
         <!-- ESP32 Setup Info -->
         <div
             style="background:var(--bg-secondary);border:1px solid var(--glass-border);border-radius:20px;padding:24px;margin-top:24px;">
@@ -138,13 +199,17 @@
 
     <!-- Mobile Bottom Nav -->
     <div class="mobile-nav">
-        <a href="#" class="nav-item active">
+        <a href="#" class="nav-item active" onclick="switchDashTab('controls')">
             <span class="nav-icon">🏠</span>
             <span>Home</span>
         </a>
-        <a href="#" class="nav-item">
+        <a href="#" class="nav-item" onclick="switchDashTab('stats')">
             <span class="nav-icon">📊</span>
             <span>Stats</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchDashTab('settings')">
+            <span class="nav-icon">⚙️</span>
+            <span>Settings</span>
         </a>
         <a href="#" class="nav-item" onclick="logout()">
             <span class="nav-icon">🔓</span>
@@ -165,7 +230,186 @@
             window.location.href = 'index.html';
         }
 
-        // Initialize Dashboard
+        // ============= Theme Toggle =============
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme') || 'dark';
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            updateThemeIcons(next);
+        }
+
+        function updateThemeIcons(theme) {
+            const icon = theme === 'dark' ? '🌙' : '☀️';
+            const el = document.getElementById('themeToggle');
+            if (el) el.textContent = icon;
+            const el2 = document.getElementById('settingsThemeBtn');
+            if (el2) el2.textContent = icon;
+        }
+
+        // Set icons on load
+        updateThemeIcons(document.documentElement.getAttribute('data-theme') || 'dark');
+
+        // ============= Device Status with Heartbeat =============
+        let deviceIsOnline = false;
+        let lastDataTime = null;
+        let onlineSinceTime = null;
+        let heartbeatTimer = null;
+        let uptimeInterval = null;
+        const activityLog = [];
+
+        function addActivity(message, type = 'info') {
+            const now = new Date();
+            activityLog.unshift({
+                time: now.toLocaleTimeString(),
+                message: message,
+                type: type
+            });
+            if (activityLog.length > 20) activityLog.pop();
+            renderActivityLog();
+        }
+
+        function renderActivityLog() {
+            const container = document.getElementById('activityLog');
+            if (!container) return;
+            if (activityLog.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-muted); font-size:0.9rem;">No activity yet</p>';
+                return;
+            }
+            container.innerHTML = activityLog.map(item => {
+                const color = item.type === 'online' ? 'var(--accent-success)' :
+                    item.type === 'offline' ? 'var(--accent-danger)' :
+                        'var(--accent-primary)';
+                return `<div class="activity-item">
+                    <div class="activity-dot" style="background:${color}"></div>
+                    <span style="color:var(--text-muted); font-size:0.8rem; min-width:70px;">${item.time}</span>
+                    <span>${item.message}</span>
+                </div>`;
+            }).join('');
+        }
+
+        function markDeviceOnline() {
+            if (!deviceIsOnline) {
+                deviceIsOnline = true;
+                onlineSinceTime = new Date();
+                addActivity('ESP32 came online', 'online');
+                startUptimeCounter();
+            }
+            lastDataTime = Date.now();
+            updateStatus(true);
+            resetHeartbeat();
+        }
+
+        function markDeviceOffline() {
+            if (deviceIsOnline) {
+                deviceIsOnline = false;
+                addActivity('ESP32 went offline', 'offline');
+                stopUptimeCounter();
+            }
+            onlineSinceTime = null;
+            updateStatus(false);
+        }
+
+        function resetHeartbeat() {
+            clearTimeout(heartbeatTimer);
+            heartbeatTimer = setTimeout(() => {
+                markDeviceOffline();
+            }, 30000); // 30 seconds no data = offline
+        }
+
+        function startUptimeCounter() {
+            stopUptimeCounter();
+            uptimeInterval = setInterval(updateUptimeDisplay, 1000);
+        }
+
+        function stopUptimeCounter() {
+            clearInterval(uptimeInterval);
+            const el = document.getElementById('settingsUptime');
+            if (el) el.textContent = '--';
+            const badge = document.getElementById('settingsStatusBadge');
+            if (badge) {
+                badge.className = 'uptime-badge offline';
+                badge.textContent = '⚫ Offline';
+            }
+            const since = document.getElementById('settingsOnlineSince');
+            if (since) since.textContent = '--';
+        }
+
+        function updateUptimeDisplay() {
+            if (!onlineSinceTime) return;
+            const diff = Date.now() - onlineSinceTime.getTime();
+            const hrs = Math.floor(diff / 3600000);
+            const mins = Math.floor((diff % 3600000) / 60000);
+            const secs = Math.floor((diff % 60000) / 1000);
+            const el = document.getElementById('settingsUptime');
+            if (el) el.textContent = `${hrs}h ${mins}m ${secs}s`;
+            const badge = document.getElementById('settingsStatusBadge');
+            if (badge) {
+                badge.className = 'uptime-badge';
+                badge.textContent = '🟢 Online';
+            }
+            const since = document.getElementById('settingsOnlineSince');
+            if (since) since.textContent = onlineSinceTime.toLocaleString();
+        }
+
+        // ============= Custom Button Names =============
+        function getCustomName(relayKey, defaultName) {
+            return localStorage.getItem('relay_name_' + relayKey) || defaultName;
+        }
+
+        function setCustomName(relayKey, name) {
+            localStorage.setItem('relay_name_' + relayKey, name);
+            if (currentDevice) renderDevice(currentDevice);
+            renderButtonNamesEditor();
+            updateScheduleDropdown();
+        }
+
+        function promptRename(relayKey, currentName) {
+            event.stopPropagation();
+            const newName = prompt('Enter new name for this button:', currentName);
+            if (newName && newName.trim()) {
+                setCustomName(relayKey, newName.trim());
+                showToast(`Renamed to "${newName.trim()}"`, 'success');
+            }
+        }
+
+        function renderButtonNamesEditor() {
+            const container = document.getElementById('buttonNamesEditor');
+            if (!container || !currentDevice) return;
+            const relays = currentDevice.start_state || {};
+            const defaultNames = { relay1: 'Living Room', relay2: 'Bedroom', relay3: 'Kitchen', relay4: 'Fan' };
+            let html = '';
+            Object.keys(relays).sort().forEach((key, idx) => {
+                const defaultName = relays[key].name || defaultNames[key] || 'Switch ' + (idx + 1);
+                const customName = getCustomName(key, defaultName);
+                html += `<div class="settings-row">
+                    <span class="settings-label">${key.toUpperCase()}</span>
+                    <input class="edit-name-input" value="${customName}" 
+                           onchange="setCustomName('${key}', this.value)"
+                           placeholder="Enter name">
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function updateScheduleDropdown() {
+            const select = document.getElementById('schDevice');
+            if (!select || !currentDevice) return;
+            const relays = currentDevice.start_state || {};
+            const defaultNames = { relay1: 'Living Room', relay2: 'Bedroom', relay3: 'Kitchen', relay4: 'Fan' };
+            select.innerHTML = '';
+            Object.keys(relays).sort().forEach((key, idx) => {
+                const defaultName = relays[key].name || defaultNames[key] || 'Switch ' + (idx + 1);
+                const name = getCustomName(key, defaultName);
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.textContent = name;
+                select.appendChild(opt);
+            });
+        }
+
+        // ============= Core Dashboard Functions =============
         initDashboard();
 
         function showToast(message, type = 'info') {
@@ -183,27 +427,21 @@
             `;
 
             container.appendChild(toast);
-
-            // Remove after 3s
             setTimeout(() => {
                 toast.classList.add('hide');
-                toast.addEventListener('animationend', () => {
-                    toast.remove();
-                });
+                toast.addEventListener('animationend', () => toast.remove());
             }, 3000);
         }
 
         async function initDashboard() {
             try {
-                // 1. Get User Info
                 const userRes = await fetch(`${API_URL}/users/me`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (!userRes.ok) throw new Error('Auth failed');
                 const user = await userRes.json();
-                document.getElementById('userName').textContent = user.email; // or name if we add it to model
+                document.getElementById('userName').textContent = user.email;
 
-                // 2. Get Devices
                 const devRes = await fetch(`${API_URL}/devices/`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -214,23 +452,30 @@
                     return;
                 }
 
-                // For now, take the first device
                 currentDevice = devices[0];
                 document.getElementById('userDeviceId').textContent = currentDevice.id;
                 document.getElementById('setupDeviceId').textContent = currentDevice.id;
 
-                // Render initial state
+                // Settings page device info
+                document.getElementById('settingsDeviceId').textContent = currentDevice.id;
+                document.getElementById('settingsDeviceName').textContent = currentDevice.name || currentDevice.id;
+
                 renderDevice(currentDevice);
-                // Render Sensor Initial State
                 if (currentDevice.temperature) updateSensorUI(currentDevice.temperature, currentDevice.humidity);
 
-                // 3. Connect WebSocket
+                // Initially device is offline until we get ESP32 data
+                updateStatus(false);
+
                 connectWebSocket(currentDevice.id);
 
                 document.getElementById('loadingOverlay').style.display = 'none';
                 const mainDash = document.getElementById('mainDashboard');
                 mainDash.style.display = 'block';
                 mainDash.classList.add('dashboard-enter');
+
+                renderButtonNamesEditor();
+                updateScheduleDropdown();
+                addActivity('Dashboard loaded', 'info');
 
             } catch (err) {
                 console.error(err);
@@ -244,28 +489,30 @@
 
             ws.onopen = () => {
                 console.log("WS Connected");
-                updateStatus(true);
                 showToast("Connected to Real-time Server", "success");
+                addActivity('WebSocket connected', 'info');
+                // Do NOT mark device online here — wait for actual ESP32 data
             };
 
             ws.onmessage = (event) => {
                 const msg = JSON.parse(event.data);
                 if (msg.type === 'update') {
                     console.log("Update received:", msg.data);
-                    // Merge update into current state
                     if (!currentDevice.start_state) currentDevice.start_state = {};
                     Object.assign(currentDevice.start_state, msg.data);
                     renderDevice(currentDevice);
+                    markDeviceOnline(); // Real ESP32 data received
                 } else if (msg.type === 'sensor_update') {
                     console.log("Sensor Update:", msg.data);
                     updateSensorUI(msg.data.temperature, msg.data.humidity);
+                    markDeviceOnline(); // Real ESP32 data received
                 }
             };
 
             ws.onclose = () => {
                 console.log("WS Disconnected");
-                updateStatus(false);
-                // Reconnect after 3s
+                addActivity('WebSocket disconnected', 'offline');
+                markDeviceOffline();
                 setTimeout(() => connectWebSocket(deviceId), 3000);
             };
         }
@@ -277,26 +524,19 @@
             if (hum !== undefined && hum !== null && hum !== "null")
                 document.getElementById('humValue').textContent = typeof hum === 'number' ? hum.toFixed(0) : hum;
 
-            // Update Charts if active
             const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
             if (tempChart && temp !== undefined && temp !== null) {
                 tempChart.data.labels.push(now);
                 tempChart.data.datasets[0].data.push(temp);
-                if (tempChart.data.labels.length > 50) { // Keep last 50 points live
-                    tempChart.data.labels.shift();
-                    tempChart.data.datasets[0].data.shift();
-                }
+                if (tempChart.data.labels.length > 50) { tempChart.data.labels.shift(); tempChart.data.datasets[0].data.shift(); }
                 tempChart.update();
             }
 
             if (humChart && hum !== undefined && hum !== null) {
                 humChart.data.labels.push(now);
                 humChart.data.datasets[0].data.push(hum);
-                if (humChart.data.labels.length > 50) {
-                    humChart.data.labels.shift();
-                    humChart.data.datasets[0].data.shift();
-                }
+                if (humChart.data.labels.length > 50) { humChart.data.labels.shift(); humChart.data.datasets[0].data.shift(); }
                 humChart.update();
             }
         }
@@ -310,18 +550,17 @@
                 txt.style.color = 'var(--accent-success)';
             } else {
                 dot.className = 'status-dot offline';
-                txt.textContent = 'Connecting...';
-                txt.style.color = 'var(--text-muted)';
+                txt.textContent = 'ESP32 Offline';
+                txt.style.color = 'var(--accent-danger)';
             }
         }
 
         function renderDevice(device) {
-            const grid = document.getElementById('switchGrid'); // Fixed ID reference
+            const grid = document.getElementById('switchGrid');
             const relays = device.start_state || {};
+            const defaultNames = { relay1: 'Living Room', relay2: 'Bedroom', relay3: 'Kitchen', relay4: 'Fan' };
 
-            // Default if empty
             if (Object.keys(relays).length === 0) {
-                // Assume 4 relays for simulation if empty
                 relays.relay1 = { state: false, name: "Living Room" };
                 relays.relay2 = { state: false, name: "Bedroom" };
                 relays.relay3 = { state: false, name: "Kitchen" };
@@ -329,15 +568,16 @@
             }
 
             let html = '';
-            // Sort keys to keep order
             Object.keys(relays).sort().forEach((key, idx) => {
                 const relay = relays[key];
                 const isOn = relay.state === true;
-                const name = relay.name || 'Switch ' + (idx + 1);
+                const defaultName = relay.name || defaultNames[key] || 'Switch ' + (idx + 1);
+                const name = getCustomName(key, defaultName);
                 const icon = switchIcons[idx] || '💡';
 
                 html += `
                 <div class="switch-card ${isOn ? 'active' : ''}" onclick="toggleRelay('${device.id}', '${key}', ${isOn})">
+                    <button class="switch-edit-btn" onclick="promptRename('${key}', '${name.replace(/'/g, "\\'")}')" title="Rename">✏️</button>
                     <div class="switch-toggle"></div>
                     <div class="switch-icon-wrapper">
                         ${icon}
@@ -354,27 +594,22 @@
 
         async function toggleRelay(deviceId, key, currentState) {
             const newState = !currentState;
-            // Optimistic update
             if (currentDevice.start_state && currentDevice.start_state[key]) {
                 currentDevice.start_state[key].state = newState;
                 renderDevice(currentDevice);
             }
 
-            // Use new Convenience Endpoints
             const action = newState ? 'on' : 'off';
             try {
                 const res = await fetch(`${API_URL}/devices/${deviceId}/relays/${key}/${action}`, {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
-
                 if (!res.ok) throw new Error("API Error");
-
+                const customName = getCustomName(key, key);
+                addActivity(`${customName} turned ${action.toUpperCase()}`, 'info');
             } catch (e) {
                 console.error("Toggle failed", e);
-                // Revert optimistic update
                 if (currentDevice.start_state && currentDevice.start_state[key]) {
                     currentDevice.start_state[key].state = currentState;
                     renderDevice(currentDevice);
@@ -392,16 +627,16 @@
             document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
             document.getElementById('tab-' + tab).classList.add('active');
 
-            ['controls', 'schedules', 'stats'].forEach(v => {
+            ['controls', 'schedules', 'stats', 'settings'].forEach(v => {
                 document.getElementById('view-' + v).style.display = 'none';
             });
-
             document.getElementById('view-' + tab).style.display = 'block';
 
-            if (tab === 'schedules') {
-                loadSchedules();
-            } else if (tab === 'stats') {
-                loadStats();
+            if (tab === 'schedules') loadSchedules();
+            else if (tab === 'stats') loadStats();
+            else if (tab === 'settings') {
+                renderButtonNamesEditor();
+                renderActivityLog();
             }
         }
 
@@ -410,22 +645,16 @@
 
         async function loadStats() {
             if (!currentDevice) return;
-
             try {
                 const res = await fetch(`${API_URL}/stats/${currentDevice.id}/stats?hours=24`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-
                 if (!res.ok) throw new Error("Failed to fetch stats");
                 const data = await res.json();
-
-                // Process Data
                 const labels = data.map(d => new Date(d.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
                 const temps = data.map(d => d.temperature);
                 const hums = data.map(d => d.humidity);
-
                 renderCharts(labels, temps, hums);
-
             } catch (e) {
                 console.error(e);
                 showToast("Error loading stats", "error");
@@ -435,8 +664,6 @@
         function renderCharts(labels, temps, hums) {
             const ctxTemp = document.getElementById('tempChart').getContext('2d');
             const ctxHum = document.getElementById('humChart').getContext('2d');
-
-            // Common Options
             const commonOptions = {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -447,38 +674,22 @@
                 plugins: { legend: { display: false } }
             };
 
-            // Temperature Chart
             if (tempChart) tempChart.destroy();
             tempChart = new Chart(ctxTemp, {
                 type: 'line',
                 data: {
                     labels: labels,
-                    datasets: [{
-                        label: 'Temperature (°C)',
-                        data: temps,
-                        borderColor: '#6366f1',
-                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }]
+                    datasets: [{ label: 'Temperature (°C)', data: temps, borderColor: '#6366f1', backgroundColor: 'rgba(99, 102, 241, 0.1)', fill: true, tension: 0.4 }]
                 },
                 options: commonOptions
             });
 
-            // Humidity Chart
             if (humChart) humChart.destroy();
             humChart = new Chart(ctxHum, {
                 type: 'line',
                 data: {
                     labels: labels,
-                    datasets: [{
-                        label: 'Humidity (%)',
-                        data: hums,
-                        borderColor: '#10b981',
-                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }]
+                    datasets: [{ label: 'Humidity (%)', data: hums, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.4 }]
                 },
                 options: commonOptions
             });
@@ -494,7 +705,6 @@
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const data = await res.json();
-
                 list.innerHTML = '';
                 if (data.length === 0) {
                     list.innerHTML = '<p style="text-align:center; color:gray;">No schedules set.</p>';
@@ -503,7 +713,7 @@
 
                 data.forEach(sch => {
                     const item = document.createElement('div');
-                    item.className = 'device-status'; // reuse style
+                    item.className = 'device-status';
                     item.style.justifyContent = 'space-between';
                     item.innerHTML = `
                         <div>
@@ -524,8 +734,8 @@
         }
 
         function formatRelayName(key) {
-            const names = { 'relay1': 'Living Room', 'relay2': 'Bedroom', 'relay3': 'Kitchen', 'relay4': 'Fan' };
-            return names[key] || key;
+            const defaults = { 'relay1': 'Living Room', 'relay2': 'Bedroom', 'relay3': 'Kitchen', 'relay4': 'Fan' };
+            return getCustomName(key, defaults[key] || key);
         }
 
         async function addSchedule() {
@@ -544,7 +754,7 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        device_id: currentDevice ? currentDevice.id : 'SH-001', // Fallback or use global
+                        device_id: currentDevice ? currentDevice.id : 'SH-001',
                         relay_key: relay,
                         action: action,
                         time: time

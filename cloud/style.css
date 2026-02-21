@@ -39,6 +39,24 @@
   --radius-lg: 24px;
   --radius-md: 16px;
   --radius-sm: 12px;
+  --transition-speed: 0.3s;
+}
+
+/* ============= Light Theme ============= */
+[data-theme="light"] {
+  --bg-primary: #f5f3ff;
+  --bg-secondary: #ffffff;
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(99, 102, 241, 0.12);
+  --glass-shadow: 0 8px 32px 0 rgba(99, 102, 241, 0.08);
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --accent-primary: #6366f1;
+  --accent-secondary: #8b5cf6;
+  --accent-success: #059669;
+  --accent-danger: #dc2626;
+  --gradient-card: linear-gradient(145deg, rgba(255, 255, 255, 0.8) 0%, rgba(245, 243, 255, 0.6) 100%);
 }
 
 body {
@@ -46,13 +64,18 @@ body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100vh;
-  /* Premium Mesh Gradient Background */
   background-image:
     radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
     radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 40%);
   background-attachment: fixed;
   padding-bottom: 80px;
-  /* Space for bottom nav on mobile */
+  transition: background var(--transition-speed) ease, color var(--transition-speed) ease;
+}
+
+[data-theme="light"] body {
+  background-image:
+    radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.06) 0%, transparent 40%);
 }
 
 /* Headings */
@@ -87,6 +110,12 @@ h3 {
   border-radius: var(--radius-lg);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
   margin-bottom: 30px;
+  transition: background var(--transition-speed) ease, border var(--transition-speed) ease;
+}
+
+[data-theme="light"] .dash-header {
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.08);
 }
 
 .dash-header h1 {
@@ -125,6 +154,10 @@ h3 {
   text-align: center;
 }
 
+[data-theme="light"] .auth-card {
+  background: rgba(255, 255, 255, 0.7);
+}
+
 .auth-logo {
   margin-bottom: 30px;
 }
@@ -156,10 +189,14 @@ input {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
-  color: white;
+  color: var(--text-primary);
   font-size: 1rem;
   font-family: inherit;
   transition: all 0.2s;
+}
+
+[data-theme="light"] input {
+  background: rgba(99, 102, 241, 0.04);
 }
 
 input:focus {
@@ -167,6 +204,10 @@ input:focus {
   border-color: var(--accent-primary);
   background: rgba(255, 255, 255, 0.1);
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+[data-theme="light"] input:focus {
+  background: rgba(99, 102, 241, 0.06);
 }
 
 /* Tabs */
@@ -192,8 +233,12 @@ input:focus {
 
 .auth-tab.active {
   background: var(--bg-secondary);
-  color: white;
+  color: var(--text-primary);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="light"] .auth-tab.active {
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.12);
 }
 
 .auth-form {
@@ -289,6 +334,12 @@ input:focus {
   -webkit-text-fill-color: transparent;
 }
 
+[data-theme="light"] .sensor-value {
+  background: linear-gradient(135deg, #0f172a 0%, #475569 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
 .sensor-unit {
   font-size: 1em;
   color: var(--text-muted);
@@ -319,6 +370,12 @@ input:focus {
   align-items: center;
   gap: 12px;
   margin-bottom: 24px;
+  transition: background var(--transition-speed) ease;
+}
+
+[data-theme="light"] .device-status {
+  background: rgba(16, 185, 129, 0.06);
+  border-color: rgba(16, 185, 129, 0.15);
 }
 
 .status-dot {
@@ -383,10 +440,24 @@ input:focus {
   background: rgba(255, 255, 255, 0.03);
 }
 
+[data-theme="light"] .switch-card {
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.06);
+}
+
+[data-theme="light"] .switch-card:hover {
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.1);
+}
+
 .switch-card.active {
   background: linear-gradient(145deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.05) 100%);
   border-color: rgba(99, 102, 241, 0.5);
   box-shadow: 0 10px 30px rgba(99, 102, 241, 0.15);
+}
+
+[data-theme="light"] .switch-card.active {
+  background: linear-gradient(145deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
 }
 
 .switch-icon-wrapper {
@@ -400,6 +471,10 @@ input:focus {
   font-size: 1.5rem;
   margin-bottom: auto;
   transition: all 0.3s;
+}
+
+[data-theme="light"] .switch-icon-wrapper {
+  background: rgba(99, 102, 241, 0.08);
 }
 
 .switch-card.active .switch-icon-wrapper {
@@ -438,6 +513,10 @@ input:focus {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 20px;
   transition: all 0.3s;
+}
+
+[data-theme="light"] .switch-toggle {
+  background: rgba(15, 23, 42, 0.12);
 }
 
 .switch-toggle::after {
@@ -568,6 +647,10 @@ input:focus {
     z-index: 1000;
   }
 
+  [data-theme="light"] .mobile-nav {
+    background: rgba(255, 255, 255, 0.9);
+  }
+
   .nav-item {
     display: flex;
     flex-direction: column;
@@ -616,6 +699,12 @@ input:focus {
   transform: translateY(20px);
   animation: toastIn 0.3s forwards;
   min-width: 300px;
+}
+
+[data-theme="light"] .toast {
+  background: rgba(255, 255, 255, 0.95);
+  color: #0f172a;
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.1);
 }
 
 .toast.success {
@@ -681,4 +770,164 @@ input:focus {
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .glass-panel {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(99, 102, 241, 0.1);
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.06);
+}
+
+/* ============= Theme Toggle Button ============= */
+.theme-toggle-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+
+.theme-toggle-btn:hover {
+  background: rgba(99, 102, 241, 0.15);
+  transform: scale(1.1);
+}
+
+[data-theme="light"] .theme-toggle-btn {
+  background: rgba(99, 102, 241, 0.08);
+}
+
+/* ============= Settings Page Styles ============= */
+.settings-section {
+  background: var(--gradient-card);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 20px;
+  transition: background var(--transition-speed) ease;
+}
+
+[data-theme="light"] .settings-section {
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.06);
+}
+
+.settings-section h3 {
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.1rem;
+}
+
+.settings-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.settings-row:last-child {
+  border-bottom: none;
+}
+
+.settings-label {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.settings-value {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.uptime-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--accent-success);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.uptime-badge.offline {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--accent-danger);
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.activity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.edit-name-input {
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  width: 140px;
+}
+
+.edit-name-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+/* Edit button on switch cards */
+.switch-edit-btn {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.switch-card:hover .switch-edit-btn {
+  opacity: 1;
+}
+
+.switch-edit-btn:hover {
+  background: rgba(99, 102, 241, 0.2);
+}
+
+[data-theme="light"] .switch-edit-btn {
+  background: rgba(99, 102, 241, 0.08);
+}
+
+/* Loading overlay light mode */
+[data-theme="light"] .loading-overlay {
+  background: #f5f3ff;
 }
