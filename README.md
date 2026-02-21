@@ -62,4 +62,4 @@ If you need to re-configure anything, check these guides in `.gemini/brain/...`:
 -   **Phase 7**: Mobile App & Automation.
 
 ---
-*Created by Antigravity*
+*Created by Md Sakib Ahmad*
