@@ -47,3 +47,17 @@ class Firmware(Base):
     
     # Store binary data directly in DB for simplicity
     data = Column(LargeBinary)
+
+class SensorReading(Base):
+    __tablename__ = "sensor_readings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    device_id = Column(String, ForeignKey("devices.id"), index=True)
+    temperature = Column(Float)
+    humidity = Column(Float)
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())
+    
+    device = relationship("Device", back_populates="readings")
+
+# Update Device relationship
+Device.readings = relationship("SensorReading", back_populates="device", cascade="all, delete-orphan")

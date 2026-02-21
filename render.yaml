@@ -15,10 +15,7 @@ services:
           name: homecontrol-db
           property: connectionString
       - key: REDIS_URL
-        fromService:
-          type: redis
-          name: homecontrol-redis
-          property: connectionString
+        sync: false # Set manually in Render Dashboard → use free Upstash Redis URL
       - key: SECRET_KEY
         generateValue: true
       - key: ALGORITHM
@@ -39,20 +36,9 @@ services:
           name: homecontrol-db
           property: connectionString
       - key: REDIS_URL
-        fromService:
-          type: redis
-          name: homecontrol-redis
-          property: connectionString
+        sync: false # Set manually in Render Dashboard → use free Upstash Redis URL
 
 databases:
   - name: homecontrol-db
     plan: free
     region: oregon
-
-# Render Redis is not free, checking if we can use free tier...
-# Render doesn't have a free Redis tier in Blueprint yet (only paid).
-# Workaround: Use an internal Redis service? Or use an external provider (Upstash).
-# For simplicity, I will attempt to define a standard Redis service, user might need to pay $10/mo or use external.
-# actually, let's look for "psexec" equivalent? No.
-# Creating a simple Redis instance (Paid) or recommending Upstash.
-# I will note this in the guide.

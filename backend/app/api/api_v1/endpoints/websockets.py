@@ -115,14 +115,28 @@ async def websocket_endpoint(
                         result = await db.execute(select(Device).filter(Device.id == device_id))
                         device = result.scalars().first()
                         if device:
+                            temp = None
+                            hum = None
+                            
                             if "temperature" in sensor_data:
-                                device.temperature = float(sensor_data["temperature"])
+                                temp = float(sensor_data["temperature"])
+                                device.temperature = temp
                             if "humidity" in sensor_data:
-                                device.humidity = float(sensor_data["humidity"])
-                            device.last_seen = datetime.now() # Use naive datetime or aware based on config
-                            # device.last_seen = datetime.utcnow() # Deprecated in Python 3.12+
-                            # Using server_default func.now() usually handles it
+                                hum = float(sensor_data["humidity"])
+                                device.humidity = hum
+                                
+                            device.last_seen = datetime.now()
                             db.add(device)
+                            
+                            # Add to History
+                            from db.models import SensorReading
+                            reading = SensorReading(
+                                device_id=device_id,
+                                temperature=temp,
+                                humidity=hum
+                            )
+                            db.add(reading)
+                            
                             await db.commit()
                     except Exception as e:
                         print(f"Error updating sensor data: {e}")
@@ -138,5 +152,3 @@ async def websocket_endpoint(
                 
     except WebSocketDisconnect:
         manager.disconnect(websocket, device_id)
-        # Optional: Mark device offline if it was the device connection?
-        # Hard to distinguish Device vs Frontend here without headers/auth.

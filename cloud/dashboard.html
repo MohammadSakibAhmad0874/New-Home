@@ -8,6 +8,7 @@
     <title>SmartHome Cloud - Dashboard</title>
     <meta name="description" content="Control your ESP32 Smart Home switches from anywhere">
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
@@ -64,6 +65,7 @@
         <div style="display:flex; gap:10px; margin-bottom:20px;">
             <button class="auth-tab active" id="tab-controls" onclick="switchDashTab('controls')">Controls</button>
             <button class="auth-tab" id="tab-schedules" onclick="switchDashTab('schedules')">Schedules</button>
+            <button class="auth-tab" id="tab-stats" onclick="switchDashTab('stats')">Stats</button>
         </div>
 
         <!-- Controls View -->
@@ -103,6 +105,18 @@
             </div>
         </div>
 
+        <!-- Stats View -->
+        <div id="view-stats" style="display:none;">
+            <div class="glass-panel" style="padding:20px; border-radius:20px; margin-bottom:20px;">
+                <h3 style="margin-bottom:15px;">Temperature History (24h)</h3>
+                <canvas id="tempChart" style="width:100%; height:250px;"></canvas>
+            </div>
+            <div class="glass-panel" style="padding:20px; border-radius:20px;">
+                <h3 style="margin-bottom:15px;">Humidity History (24h)</h3>
+                <canvas id="humChart" style="width:100%; height:250px;"></canvas>
+            </div>
+        </div>
+
         <!-- ESP32 Setup Info -->
         <div
             style="background:var(--bg-secondary);border:1px solid var(--glass-border);border-radius:20px;padding:24px;margin-top:24px;">
@@ -118,6 +132,9 @@
             </p>
         </div>
     </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
 
     <!-- Mobile Bottom Nav -->
     <div class="mobile-nav">
@@ -151,6 +168,31 @@
         // Initialize Dashboard
         initDashboard();
 
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+
+            let icon = 'ℹ️';
+            if (type === 'success') icon = '✅';
+            if (type === 'error') icon = '⚠️';
+
+            toast.innerHTML = `
+                <span class="toast-icon">${icon}</span>
+                <span class="toast-message">${message}</span>
+            `;
+
+            container.appendChild(toast);
+
+            // Remove after 3s
+            setTimeout(() => {
+                toast.classList.add('hide');
+                toast.addEventListener('animationend', () => {
+                    toast.remove();
+                });
+            }, 3000);
+        }
+
         async function initDashboard() {
             try {
                 // 1. Get User Info
@@ -168,7 +210,7 @@
                 const devices = await devRes.json();
 
                 if (devices.length === 0) {
-                    showError("No devices found. Please register one.");
+                    showToast("No devices found. Please register one.", 'error');
                     return;
                 }
 
@@ -186,12 +228,14 @@
                 connectWebSocket(currentDevice.id);
 
                 document.getElementById('loadingOverlay').style.display = 'none';
-                document.getElementById('mainDashboard').style.display = 'block';
+                const mainDash = document.getElementById('mainDashboard');
+                mainDash.style.display = 'block';
+                mainDash.classList.add('dashboard-enter');
 
             } catch (err) {
                 console.error(err);
                 if (err.message === 'Auth failed') logout();
-                alert("Error loading dashboard: " + err.message);
+                showToast("Error loading dashboard: " + err.message, 'error');
             }
         }
 
@@ -201,6 +245,7 @@
             ws.onopen = () => {
                 console.log("WS Connected");
                 updateStatus(true);
+                showToast("Connected to Real-time Server", "success");
             };
 
             ws.onmessage = (event) => {
@@ -231,6 +276,29 @@
 
             if (hum !== undefined && hum !== null && hum !== "null")
                 document.getElementById('humValue').textContent = typeof hum === 'number' ? hum.toFixed(0) : hum;
+
+            // Update Charts if active
+            const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            if (tempChart && temp !== undefined && temp !== null) {
+                tempChart.data.labels.push(now);
+                tempChart.data.datasets[0].data.push(temp);
+                if (tempChart.data.labels.length > 50) { // Keep last 50 points live
+                    tempChart.data.labels.shift();
+                    tempChart.data.datasets[0].data.shift();
+                }
+                tempChart.update();
+            }
+
+            if (humChart && hum !== undefined && hum !== null) {
+                humChart.data.labels.push(now);
+                humChart.data.datasets[0].data.push(hum);
+                if (humChart.data.labels.length > 50) {
+                    humChart.data.labels.shift();
+                    humChart.data.datasets[0].data.shift();
+                }
+                humChart.update();
+            }
         }
 
         function updateStatus(online) {
@@ -248,7 +316,7 @@
         }
 
         function renderDevice(device) {
-            const grid = document.getElementById('controlsGrid');
+            const grid = document.getElementById('switchGrid'); // Fixed ID reference
             const relays = device.start_state || {};
 
             // Default if empty
@@ -311,7 +379,7 @@
                     currentDevice.start_state[key].state = currentState;
                     renderDevice(currentDevice);
                 }
-                alert("Failed to toggle switch");
+                showToast("Failed to toggle switch", 'error');
             }
         }
 
@@ -324,14 +392,96 @@
             document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
             document.getElementById('tab-' + tab).classList.add('active');
 
-            if (tab === 'controls') {
-                document.getElementById('view-controls').style.display = 'block';
-                document.getElementById('view-schedules').style.display = 'none';
-            } else {
-                document.getElementById('view-controls').style.display = 'none';
-                document.getElementById('view-schedules').style.display = 'block';
+            ['controls', 'schedules', 'stats'].forEach(v => {
+                document.getElementById('view-' + v).style.display = 'none';
+            });
+
+            document.getElementById('view-' + tab).style.display = 'block';
+
+            if (tab === 'schedules') {
                 loadSchedules();
+            } else if (tab === 'stats') {
+                loadStats();
             }
+        }
+
+        let tempChart = null;
+        let humChart = null;
+
+        async function loadStats() {
+            if (!currentDevice) return;
+
+            try {
+                const res = await fetch(`${API_URL}/stats/${currentDevice.id}/stats?hours=24`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!res.ok) throw new Error("Failed to fetch stats");
+                const data = await res.json();
+
+                // Process Data
+                const labels = data.map(d => new Date(d.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+                const temps = data.map(d => d.temperature);
+                const hums = data.map(d => d.humidity);
+
+                renderCharts(labels, temps, hums);
+
+            } catch (e) {
+                console.error(e);
+                showToast("Error loading stats", "error");
+            }
+        }
+
+        function renderCharts(labels, temps, hums) {
+            const ctxTemp = document.getElementById('tempChart').getContext('2d');
+            const ctxHum = document.getElementById('humChart').getContext('2d');
+
+            // Common Options
+            const commonOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                    y: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                },
+                plugins: { legend: { display: false } }
+            };
+
+            // Temperature Chart
+            if (tempChart) tempChart.destroy();
+            tempChart = new Chart(ctxTemp, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Temperature (°C)',
+                        data: temps,
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: commonOptions
+            });
+
+            // Humidity Chart
+            if (humChart) humChart.destroy();
+            humChart = new Chart(ctxHum, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Humidity (%)',
+                        data: hums,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: commonOptions
+            });
         }
 
         async function loadSchedules() {
@@ -384,7 +534,7 @@
             const relay = document.getElementById('schDevice').value;
             const action = document.getElementById('schAction').value === 'true';
 
-            if (!time) return alert("Please select a time");
+            if (!time) return showToast("Please select a time", 'error');
 
             try {
                 await fetch(`${API_URL}/schedules/`, {
@@ -400,11 +550,13 @@
                         time: time
                     })
                 });
+                showToast("Schedule added successfully!", "success");
                 loadSchedules();
             } catch (e) {
-                alert("Failed to save schedule");
+                showToast("Failed to save schedule", 'error');
             }
         }
-</body >
+    </script>
+</body>
 
-</html >
+</html>
