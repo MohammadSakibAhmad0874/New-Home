@@ -36,28 +36,32 @@
             --orb-1: rgba(99, 102, 241, 0.15);
             --orb-2: rgba(139, 92, 246, 0.12);
             --orb-3: rgba(59, 130, 246, 0.1);
+            --particle-color: rgba(99, 102, 241, 0.3);
+            --grid-opacity: 0.3;
             --toggle-bg: rgba(255, 255, 255, 0.1);
             --toggle-icon: "🌙";
         }
 
         [data-theme="light"] {
-            --bg-primary: #f0f4ff;
+            --bg-primary: #eef2ff;
             --bg-secondary: #ffffff;
-            --bg-card: rgba(255, 255, 255, 0.85);
-            --bg-input: rgba(0, 0, 0, 0.04);
-            --bg-input-hover: rgba(0, 0, 0, 0.07);
-            --border-color: rgba(0, 0, 0, 0.08);
-            --border-focus: rgba(99, 102, 241, 0.4);
+            --bg-card: rgba(255, 255, 255, 0.75);
+            --bg-input: rgba(99, 102, 241, 0.06);
+            --bg-input-hover: rgba(99, 102, 241, 0.1);
+            --border-color: rgba(99, 102, 241, 0.12);
+            --border-focus: rgba(99, 102, 241, 0.5);
             --text-primary: #0f172a;
             --text-secondary: #475569;
             --text-muted: #94a3b8;
             --text-input: #1e293b;
-            --shadow-card: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
-            --shadow-btn: 0 4px 20px rgba(99, 102, 241, 0.25);
-            --orb-1: rgba(99, 102, 241, 0.12);
-            --orb-2: rgba(236, 72, 153, 0.08);
-            --orb-3: rgba(14, 165, 233, 0.08);
-            --toggle-bg: rgba(0, 0, 0, 0.08);
+            --shadow-card: 0 25px 60px -12px rgba(99, 102, 241, 0.18), 0 0 0 1px rgba(99, 102, 241, 0.06);
+            --shadow-btn: 0 4px 24px rgba(99, 102, 241, 0.35);
+            --orb-1: rgba(99, 102, 241, 0.35);
+            --orb-2: rgba(236, 72, 153, 0.25);
+            --orb-3: rgba(14, 165, 233, 0.2);
+            --particle-color: rgba(99, 102, 241, 0.4);
+            --grid-opacity: 0.15;
+            --toggle-bg: rgba(99, 102, 241, 0.1);
             --toggle-icon: "☀️";
         }
 
@@ -80,6 +84,11 @@
             transition: background var(--transition-speed) ease, color var(--transition-speed) ease;
         }
 
+        /* Light mode gradient background boost */
+        [data-theme="light"] body {
+            background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 30%, #fdf2f8 60%, #eff6ff 100%);
+        }
+
         /* ============= Animated Background ============= */
         .bg-orbs {
             position: fixed;
@@ -94,7 +103,11 @@
             border-radius: 50%;
             filter: blur(80px);
             animation: float 20s ease-in-out infinite;
-            transition: background var(--transition-speed) ease;
+            transition: background var(--transition-speed) ease, filter var(--transition-speed) ease;
+        }
+
+        [data-theme="light"] .orb {
+            filter: blur(100px);
         }
 
         .orb-1 {
@@ -156,8 +169,9 @@
                 linear-gradient(var(--border-color) 1px, transparent 1px),
                 linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
             background-size: 60px 60px;
-            opacity: 0.3;
+            opacity: var(--grid-opacity);
             pointer-events: none;
+            transition: opacity var(--transition-speed) ease;
         }
 
         /* ============= Theme Toggle ============= */
@@ -503,9 +517,56 @@
             position: absolute;
             width: 3px;
             height: 3px;
-            background: rgba(99, 102, 241, 0.3);
+            background: var(--particle-color);
             border-radius: 50%;
             animation: drift linear infinite;
+            transition: background var(--transition-speed) ease;
+        }
+
+        /* ============= Light Mode Enhancements ============= */
+        [data-theme="light"] .auth-card {
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            box-shadow:
+                0 25px 60px -12px rgba(99, 102, 241, 0.15),
+                0 0 0 1px rgba(99, 102, 241, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        }
+
+        [data-theme="light"] .logo-icon {
+            box-shadow: 0 8px 35px rgba(99, 102, 241, 0.45);
+        }
+
+        [data-theme="light"] .tab-bar {
+            background: rgba(99, 102, 241, 0.08);
+        }
+
+        [data-theme="light"] .submit-btn {
+            box-shadow: 0 6px 28px rgba(99, 102, 241, 0.35);
+        }
+
+        [data-theme="light"] .submit-btn:hover {
+            box-shadow: 0 8px 35px rgba(99, 102, 241, 0.5);
+        }
+
+        [data-theme="light"] .submit-btn.green {
+            box-shadow: 0 6px 28px rgba(16, 185, 129, 0.35);
+        }
+
+        [data-theme="light"] .theme-toggle {
+            background: rgba(255, 255, 255, 0.8);
+            border-color: rgba(99, 102, 241, 0.15);
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.12);
+        }
+
+        [data-theme="light"] .field-input {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1.5px solid rgba(99, 102, 241, 0.12);
+        }
+
+        [data-theme="light"] .field-input:focus {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: rgba(99, 102, 241, 0.5);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
         }
 
         @keyframes drift {
