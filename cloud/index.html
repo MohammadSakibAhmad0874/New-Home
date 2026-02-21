@@ -1,169 +1,716 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SmartHome Cloud - Login</title>
     <meta name="description" content="Control your ESP32 Smart Home from anywhere in the world">
-    <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <!-- Chart.js for Analytics -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Config -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
     <script src="config.js"></script>
-</head>
-
-<body>
-
-    <script>
-        // Immediate check to prevent flash
-        const token = localStorage.getItem('access_token');
-        if (token) {
-            window.location.href = 'dashboard.html';
-        }
-    </script>
     <style>
+        /* ============= Theme System ============= */
+        :root {
+            --transition-speed: 0.4s;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: rgba(17, 24, 39, 0.7);
+            --bg-input: rgba(255, 255, 255, 0.06);
+            --bg-input-hover: rgba(255, 255, 255, 0.1);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-focus: rgba(99, 102, 241, 0.5);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --text-input: #ffffff;
+            --shadow-card: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            --shadow-btn: 0 4px 20px rgba(99, 102, 241, 0.4);
+            --orb-1: rgba(99, 102, 241, 0.15);
+            --orb-2: rgba(139, 92, 246, 0.12);
+            --orb-3: rgba(59, 130, 246, 0.1);
+            --toggle-bg: rgba(255, 255, 255, 0.1);
+            --toggle-icon: "🌙";
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #f0f4ff;
+            --bg-secondary: #ffffff;
+            --bg-card: rgba(255, 255, 255, 0.85);
+            --bg-input: rgba(0, 0, 0, 0.04);
+            --bg-input-hover: rgba(0, 0, 0, 0.07);
+            --border-color: rgba(0, 0, 0, 0.08);
+            --border-focus: rgba(99, 102, 241, 0.4);
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --text-input: #1e293b;
+            --shadow-card: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+            --shadow-btn: 0 4px 20px rgba(99, 102, 241, 0.25);
+            --orb-1: rgba(99, 102, 241, 0.12);
+            --orb-2: rgba(236, 72, 153, 0.08);
+            --orb-3: rgba(14, 165, 233, 0.08);
+            --toggle-bg: rgba(0, 0, 0, 0.08);
+            --toggle-icon: "☀️";
+        }
+
+        /* ============= Base ============= */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            animation: fadeIn 0.5s ease forwards;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            transition: background var(--transition-speed) ease, color var(--transition-speed) ease;
+        }
+
+        /* ============= Animated Background ============= */
+        .bg-orbs {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            animation: float 20s ease-in-out infinite;
+            transition: background var(--transition-speed) ease;
+        }
+
+        .orb-1 {
+            width: 500px;
+            height: 500px;
+            background: var(--orb-1);
+            top: -10%;
+            left: -10%;
+            animation-delay: 0s;
+        }
+
+        .orb-2 {
+            width: 400px;
+            height: 400px;
+            background: var(--orb-2);
+            bottom: -15%;
+            right: -10%;
+            animation-delay: -7s;
+            animation-duration: 25s;
+        }
+
+        .orb-3 {
+            width: 300px;
+            height: 300px;
+            background: var(--orb-3);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: -14s;
+            animation-duration: 30s;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            25% {
+                transform: translate(80px, -60px) scale(1.1);
+            }
+
+            50% {
+                transform: translate(-40px, 80px) scale(0.95);
+            }
+
+            75% {
+                transform: translate(60px, 40px) scale(1.05);
+            }
+        }
+
+        /* ============= Grid Pattern Overlay ============= */
+        .grid-pattern {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            background-image:
+                linear-gradient(var(--border-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
+            background-size: 60px 60px;
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        /* ============= Theme Toggle ============= */
+        .theme-toggle {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 100;
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            border: 1px solid var(--border-color);
+            background: var(--toggle-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3em;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.08);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        .theme-toggle:active {
+            transform: scale(0.95);
+        }
+
+        /* ============= Login Container ============= */
+        .login-wrapper {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 460px;
+            padding: 20px;
+            animation: enterUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+        }
+
+        @keyframes enterUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.97);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* ============= Logo Section ============= */
+        .logo-section {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .logo-icon {
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 16px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
+            border-radius: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.35);
+            animation: iconPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes iconPulse {
+
+            0%,
+            100% {
+                box-shadow: 0 8px 30px rgba(99, 102, 241, 0.35);
+            }
+
+            50% {
+                box-shadow: 0 8px 40px rgba(99, 102, 241, 0.55);
+            }
+        }
+
+        .logo-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.8em;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-subtitle {
+            color: var(--text-muted);
+            font-size: 0.95em;
+            margin-top: 4px;
+            font-weight: 400;
+        }
+
+        /* ============= Card ============= */
+        .auth-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 36px;
+            box-shadow: var(--shadow-card);
+            transition: background var(--transition-speed) ease,
+                border-color var(--transition-speed) ease,
+                box-shadow var(--transition-speed) ease;
+        }
+
+        /* ============= Tab Switcher ============= */
+        .tab-bar {
+            display: flex;
+            background: var(--bg-input);
+            border-radius: 14px;
+            padding: 4px;
+            margin-bottom: 28px;
+            position: relative;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 11px 0;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 0.9em;
+            cursor: pointer;
+            border-radius: 11px;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 2;
+        }
+
+        .tab-btn.active {
+            color: #ffffff;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        [data-theme="light"] .tab-btn.active {
+            color: #ffffff;
+        }
+
+        /* ============= Messages ============= */
+        .msg {
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 0.88em;
+            font-weight: 500;
+            margin-bottom: 16px;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .msg-error {
+            background: rgba(239, 68, 68, 0.12);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.15);
+        }
+
+        .msg-success {
+            background: rgba(34, 197, 94, 0.12);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.15);
         }
 
         @keyframes fadeIn {
             from {
                 opacity: 0;
+                transform: translateY(-4px);
             }
 
             to {
                 opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ============= Form ============= */
+        .form-view {
+            display: none;
+        }
+
+        .form-view.active {
+            display: block;
+            animation: fadeIn 0.35s ease;
+        }
+
+        .field {
+            margin-bottom: 18px;
+        }
+
+        .field-label {
+            display: block;
+            margin-bottom: 7px;
+            font-size: 0.82em;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .field-input {
+            width: 100%;
+            padding: 13px 16px;
+            background: var(--bg-input);
+            border: 1.5px solid transparent;
+            border-radius: 12px;
+            color: var(--text-input);
+            font-size: 0.95em;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.25s ease;
+            outline: none;
+        }
+
+        .field-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .field-input:hover {
+            background: var(--bg-input-hover);
+        }
+
+        .field-input:focus {
+            border-color: var(--border-focus);
+            background: var(--bg-input-hover);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.08);
+        }
+
+        /* ============= Submit Button ============= */
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+            background-size: 200% 200%;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-btn);
+            margin-top: 6px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.5s ease;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(99, 102, 241, 0.5);
+            background-position: 100% 0;
+        }
+
+        .submit-btn:hover::before {
+            transform: translateX(100%);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .submit-btn.green {
+            background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .submit-btn.green:hover {
+            box-shadow: 0 6px 25px rgba(16, 185, 129, 0.45);
+        }
+
+        /* ============= Divider ============= */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 24px 0;
+            color: var(--text-muted);
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-color);
+        }
+
+        /* ============= Footer ============= */
+        .footer-text {
+            text-align: center;
+            margin-top: 24px;
+            color: var(--text-muted);
+            font-size: 0.8em;
+        }
+
+        .footer-text a {
+            color: #6366f1;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        /* ============= Floating Particles ============= */
+        .particles {
+            position: fixed;
+            inset: 0;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: rgba(99, 102, 241, 0.3);
+            border-radius: 50%;
+            animation: drift linear infinite;
+        }
+
+        @keyframes drift {
+            from {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            90% {
+                opacity: 1;
+            }
+
+            to {
+                transform: translateY(-10vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        /* ============= Responsive ============= */
+        @media (max-width: 480px) {
+            .auth-card {
+                padding: 28px 22px;
+                border-radius: 20px;
+            }
+
+            .logo-title {
+                font-size: 1.5em;
+            }
+
+            .logo-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 1.6rem;
+                border-radius: 18px;
+            }
+
+            .theme-toggle {
+                top: 16px;
+                right: 16px;
+                width: 42px;
+                height: 42px;
+            }
+        }
+
+        /* ============= Loading Spinner ============= */
+        .btn-spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2.5px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
             }
         }
     </style>
+</head>
+
+<body>
     <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
-                .then(() => console.log('Service Worker Registered'))
-                .catch(() => console.log('SW not found, skipping'));
+        // Redirect if logged in
+        if (localStorage.getItem('access_token')) {
+            window.location.href = 'dashboard.html';
         }
+        // Restore saved theme
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
     </script>
 
+    <!-- Animated Background -->
+    <div class="bg-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+    <div class="grid-pattern"></div>
 
-    <!-- Login/Register UI -->
-    <div class="auth-container" style="max-width: 440px; margin: 60px auto; padding: 0 20px;">
-        <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="font-size: 2.2em; margin-bottom: 5px;">🏠 SmartHome Cloud</h1>
-            <p style="color: var(--text-secondary, #94a3b8); font-size: 1em;">Control your home from anywhere</p>
+    <!-- Floating Particles -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Theme Toggle -->
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle theme"></button>
+
+    <!-- Main Content -->
+    <div class="login-wrapper">
+        <!-- Logo -->
+        <div class="logo-section">
+            <div class="logo-icon">🏠</div>
+            <h1 class="logo-title">SmartHome Cloud</h1>
+            <p class="logo-subtitle">Control your home from anywhere</p>
         </div>
 
-        <div class="card"
-            style="padding: 30px; border-radius: 16px; background: var(--card-bg, rgba(30,41,59,0.8)); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08);">
-            <!-- Tabs -->
-            <div
-                style="display: flex; gap: 0; margin-bottom: 25px; border-radius: 10px; overflow: hidden; background: rgba(0,0,0,0.2);">
-                <button class="auth-tab active" onclick="switchTab('login')"
-                    style="flex:1; padding: 12px; border: none; cursor: pointer; font-weight: 600; font-size: 0.95em; background: var(--accent-primary, #3b82f6); color: white; transition: all 0.3s;">Login</button>
-                <button class="auth-tab" onclick="switchTab('register')"
-                    style="flex:1; padding: 12px; border: none; cursor: pointer; font-weight: 600; font-size: 0.95em; background: transparent; color: var(--text-secondary, #94a3b8); transition: all 0.3s;">Register</button>
+        <!-- Card -->
+        <div class="auth-card">
+            <!-- Tab Switcher -->
+            <div class="tab-bar">
+                <button class="tab-btn active" id="tabLogin" onclick="switchTab('login')">Sign In</button>
+                <button class="tab-btn" id="tabRegister" onclick="switchTab('register')">Create Account</button>
             </div>
 
             <!-- Messages -->
-            <div id="errorMsg"
-                style="display:none; padding: 12px; border-radius: 8px; background: rgba(239,68,68,0.15); color: #f87171; margin-bottom: 15px; font-size: 0.9em;">
-            </div>
-            <div id="successMsg"
-                style="display:none; padding: 12px; border-radius: 8px; background: rgba(34,197,94,0.15); color: #4ade80; margin-bottom: 15px; font-size: 0.9em;">
-            </div>
+            <div class="msg msg-error" id="errorMsg"></div>
+            <div class="msg msg-success" id="successMsg"></div>
 
             <!-- Login Form -->
-            <form id="loginForm" class="auth-form active" onsubmit="handleLogin(event)">
-                <div style="margin-bottom: 15px;">
-                    <label
-                        style="display:block; margin-bottom:6px; font-size:0.85em; color: var(--text-secondary, #94a3b8);">Email</label>
-                    <input type="email" id="loginEmail" required placeholder="your@email.com"
-                        style="width:100%; padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.3); color:white; font-size:1em; box-sizing:border-box;">
+            <form class="form-view active" id="loginForm" onsubmit="handleLogin(event)">
+                <div class="field">
+                    <label class="field-label">Email Address</label>
+                    <input type="email" class="field-input" id="loginEmail" required placeholder="you@example.com"
+                        autocomplete="email">
                 </div>
-                <div style="margin-bottom: 20px;">
-                    <label
-                        style="display:block; margin-bottom:6px; font-size:0.85em; color: var(--text-secondary, #94a3b8);">Password</label>
-                    <input type="password" id="loginPassword" required placeholder="••••••••"
-                        style="width:100%; padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.3); color:white; font-size:1em; box-sizing:border-box;">
+                <div class="field">
+                    <label class="field-label">Password</label>
+                    <input type="password" class="field-input" id="loginPassword" required placeholder="••••••••"
+                        autocomplete="current-password">
                 </div>
-                <button type="submit" id="loginBtn"
-                    style="width:100%; padding:14px; border:none; border-radius:10px; background:linear-gradient(135deg, #3b82f6, #8b5cf6); color:white; font-size:1.05em; font-weight:600; cursor:pointer; transition: all 0.3s;">🔑
-                    Login to Dashboard</button>
+                <button type="submit" class="submit-btn" id="loginBtn">
+                    Sign In →
+                </button>
             </form>
 
             <!-- Register Form -->
-            <form id="registerForm" class="auth-form" onsubmit="handleRegister(event)" style="display:none;">
-                <div style="margin-bottom: 15px;">
-                    <label
-                        style="display:block; margin-bottom:6px; font-size:0.85em; color: var(--text-secondary, #94a3b8);">Email</label>
-                    <input type="email" id="regEmail" required placeholder="your@email.com"
-                        style="width:100%; padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.3); color:white; font-size:1em; box-sizing:border-box;">
+            <form class="form-view" id="registerForm" onsubmit="handleRegister(event)">
+                <div class="field">
+                    <label class="field-label">Email Address</label>
+                    <input type="email" class="field-input" id="regEmail" required placeholder="you@example.com"
+                        autocomplete="email">
                 </div>
-                <div style="margin-bottom: 15px;">
-                    <label
-                        style="display:block; margin-bottom:6px; font-size:0.85em; color: var(--text-secondary, #94a3b8);">Password</label>
-                    <input type="password" id="regPassword" required placeholder="••••••••"
-                        style="width:100%; padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.3); color:white; font-size:1em; box-sizing:border-box;">
+                <div class="field">
+                    <label class="field-label">Password</label>
+                    <input type="password" class="field-input" id="regPassword" required placeholder="Min 6 characters"
+                        autocomplete="new-password">
                 </div>
-                <div style="margin-bottom: 15px;">
-                    <label
-                        style="display:block; margin-bottom:6px; font-size:0.85em; color: var(--text-secondary, #94a3b8);">Device
-                        ID</label>
-                    <input type="text" id="regDeviceId" required placeholder="SH-001"
-                        style="width:100%; padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.3); color:white; font-size:1em; box-sizing:border-box;">
+
+                <div class="divider">Device Setup</div>
+
+                <div class="field">
+                    <label class="field-label">Device ID</label>
+                    <input type="text" class="field-input" id="regDeviceId" required placeholder="e.g. SH-001">
                 </div>
-                <div style="margin-bottom: 20px;">
-                    <label
-                        style="display:block; margin-bottom:6px; font-size:0.85em; color: var(--text-secondary, #94a3b8);">Device
-                        Name</label>
-                    <input type="text" id="regDeviceName" required placeholder="My Smart Home"
-                        style="width:100%; padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.3); color:white; font-size:1em; box-sizing:border-box;">
+                <div class="field">
+                    <label class="field-label">Device Name</label>
+                    <input type="text" class="field-input" id="regDeviceName" required placeholder="e.g. My Smart Home">
                 </div>
-                <button type="submit" id="registerBtn"
-                    style="width:100%; padding:14px; border:none; border-radius:10px; background:linear-gradient(135deg, #10b981, #3b82f6); color:white; font-size:1.05em; font-weight:600; cursor:pointer; transition: all 0.3s;">📱
-                    Register & Create Account</button>
+                <button type="submit" class="submit-btn green" id="registerBtn">
+                    Create Account →
+                </button>
             </form>
         </div>
 
-        <p style="text-align:center; margin-top:20px; color: var(--text-secondary, #64748b); font-size:0.85em;">
-            Powered by HomeControl BaaS — ESP32 Cloud Platform
+        <!-- Footer -->
+        <p class="footer-text">
+            Powered by <a href="#">HomeControl BaaS</a> · ESP32 Cloud Platform
         </p>
     </div>
 
     <script>
-        function switchTab(tab) {
-            document.querySelectorAll('.auth-tab').forEach(t => {
-                t.style.background = 'transparent';
-                t.style.color = 'var(--text-secondary, #94a3b8)';
-            });
+        // ============= Theme Toggle =============
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            updateToggleIcon(next);
+        }
 
-            if (tab === 'login') {
-                document.querySelectorAll('.auth-tab')[0].style.background = 'var(--accent-primary, #3b82f6)';
-                document.querySelectorAll('.auth-tab')[0].style.color = 'white';
-                document.getElementById('loginForm').style.display = 'block';
-                document.getElementById('registerForm').style.display = 'none';
-            } else {
-                document.querySelectorAll('.auth-tab')[1].style.background = 'var(--accent-primary, #3b82f6)';
-                document.querySelectorAll('.auth-tab')[1].style.color = 'white';
-                document.getElementById('loginForm').style.display = 'none';
-                document.getElementById('registerForm').style.display = 'block';
-            }
+        function updateToggleIcon(theme) {
+            document.getElementById('themeToggle').textContent = theme === 'dark' ? '🌙' : '☀️';
+        }
+
+        // Init theme icon
+        updateToggleIcon(document.documentElement.getAttribute('data-theme'));
+
+        // ============= Tab Switching =============
+        function switchTab(tab) {
+            document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+            document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
+            document.getElementById('loginForm').classList.toggle('active', tab === 'login');
+            document.getElementById('registerForm').classList.toggle('active', tab === 'register');
             clearMessages();
         }
 
+        // ============= Messages =============
         function showError(msg) {
             const el = document.getElementById('errorMsg');
-            el.textContent = msg;
+            el.textContent = '⚠️ ' + msg;
             el.style.display = 'block';
             document.getElementById('successMsg').style.display = 'none';
         }
 
         function showSuccess(msg) {
             const el = document.getElementById('successMsg');
-            el.textContent = msg;
+            el.textContent = '✓ ' + msg;
             el.style.display = 'block';
             document.getElementById('errorMsg').style.display = 'none';
         }
@@ -173,11 +720,12 @@
             document.getElementById('successMsg').style.display = 'none';
         }
 
+        // ============= Login =============
         async function handleLogin(e) {
             e.preventDefault();
             const btn = document.getElementById('loginBtn');
             btn.disabled = true;
-            btn.textContent = '⏳ Logging in...';
+            btn.innerHTML = '<span class="btn-spinner"></span> Signing in...';
             clearMessages();
 
             const email = document.getElementById('loginEmail').value.trim();
@@ -196,25 +744,27 @@
 
                 if (!response.ok) {
                     const err = await response.json();
-                    throw new Error(err.detail || 'Login failed');
+                    throw new Error(err.detail || 'Invalid email or password');
                 }
 
                 const data = await response.json();
                 localStorage.setItem('access_token', data.access_token);
-                window.location.href = 'dashboard.html';
+                showSuccess('Login successful! Redirecting...');
+                setTimeout(() => { window.location.href = 'dashboard.html'; }, 500);
 
             } catch (err) {
                 showError(err.message);
                 btn.disabled = false;
-                btn.textContent = '🔑 Login to Dashboard';
+                btn.innerHTML = 'Sign In →';
             }
         }
 
+        // ============= Register =============
         async function handleRegister(e) {
             e.preventDefault();
             const btn = document.getElementById('registerBtn');
             btn.disabled = true;
-            btn.textContent = '⏳ Registering...';
+            btn.innerHTML = '<span class="btn-spinner"></span> Creating account...';
             clearMessages();
 
             const email = document.getElementById('regEmail').value.trim();
@@ -223,6 +773,7 @@
             const deviceName = document.getElementById('regDeviceName').value.trim();
 
             try {
+                // 1. Create User
                 let res = await fetch(`${API_URL}/users/`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -231,9 +782,10 @@
 
                 if (!res.ok) {
                     const err = await res.json();
-                    throw new Error(err.detail || 'User registration failed');
+                    throw new Error(err.detail || 'Registration failed');
                 }
 
+                // 2. Auto-login
                 const formData = new URLSearchParams();
                 formData.append('username', email);
                 formData.append('password', password);
@@ -244,22 +796,18 @@
                     body: formData
                 });
 
-                if (!res.ok) throw new Error('Auto-login failed after registration');
+                if (!res.ok) throw new Error('Auto-login failed');
                 const tokenData = await res.json();
-                const token = tokenData.access_token;
-                localStorage.setItem('access_token', token);
+                localStorage.setItem('access_token', tokenData.access_token);
 
+                // 3. Register Device
                 res = await fetch(`${API_URL}/devices/`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${tokenData.access_token}`
                     },
-                    body: JSON.stringify({
-                        id: deviceId,
-                        name: deviceName,
-                        type: 'esp32'
-                    })
+                    body: JSON.stringify({ id: deviceId, name: deviceName, type: 'esp32' })
                 });
 
                 if (!res.ok) {
@@ -267,16 +815,34 @@
                     throw new Error(err.detail || 'Device registration failed');
                 }
 
-                showSuccess('✅ Account & Device Created! Redirecting...');
-                setTimeout(() => {
-                    window.location.href = 'dashboard.html';
-                }, 1500);
+                showSuccess('Account & device created! Redirecting...');
+                setTimeout(() => { window.location.href = 'dashboard.html'; }, 1200);
 
             } catch (err) {
                 showError(err.message);
                 btn.disabled = false;
-                btn.textContent = '📱 Register & Create Account';
+                btn.innerHTML = 'Create Account →';
             }
+        }
+
+        // ============= Floating Particles =============
+        (function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 25; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.animationDuration = (15 + Math.random() * 20) + 's';
+                p.style.animationDelay = -(Math.random() * 30) + 's';
+                p.style.width = p.style.height = (2 + Math.random() * 3) + 'px';
+                p.style.opacity = 0.15 + Math.random() * 0.3;
+                container.appendChild(p);
+            }
+        })();
+
+        // ============= Service Worker =============
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(() => { });
         }
     </script>
 </body>
