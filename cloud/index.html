@@ -12,6 +12,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <!-- Chart.js for Analytics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Config -->
+    <script src="config.js"></script>
 </head>
 
 <body>
@@ -45,19 +47,128 @@
         }
     </script>
 
+    <!-- Login/Register UI -->
+    <div class="auth-container" style="max-width: 440px; margin: 60px auto; padding: 0 20px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="font-size: 2.2em; margin-bottom: 5px;">🏠 SmartHome Cloud</h1>
+            <p style="color: var(--text-secondary, #94a3b8); font-size: 1em;">Control your home from anywhere</p>
+        </div>
+
+        <div class="card"
+            style="padding: 30px; border-radius: 16px; background: var(--card-bg, rgba(30,41,59,0.8)); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08);">
+            <!-- Tabs -->
+            <div
+                style="display: flex; gap: 0; margin-bottom: 25px; border-radius: 10px; overflow: hidden; background: rgba(0,0,0,0.2);">
+                <button class="auth-tab active" onclick="switchTab('login')"
+                    style="flex:1; padding: 12px; border: none; cursor: pointer; font-weight: 600; font-size: 0.95em; background: var(--accent-primary, #3b82f6); color: white; transition: all 0.3s;">Login</button>
+                <button class="auth-tab" onclick="switchTab('register')"
+                    style="flex:1; padding: 12px; border: none; cursor: pointer; font-weight: 600; font-size: 0.95em; background: transparent; color: var(--text-secondary, #94a3b8); transition: all 0.3s;">Register</button>
+            </div>
+
+            <!-- Messages -->
+            <div id="errorMsg"
+                style="display:none; padding: 12px; border-radius: 8px; background: rgba(239,68,68,0.15); color: #f87171; margin-bottom: 15px; font-size: 0.9em;">
+            </div>
+            <div id="successMsg"
+                style="display:none; padding: 12px; border-radius: 8px; background: rgba(34,197,94,0.15); color: #4ade80; margin-bottom: 15px; font-size: 0.9em;">
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" class="auth-form active" onsubmit="handleLogin(event)">
+                <div style="margin-bottom: 15px;">
+                    <label
+                        style="display:block; margin-bottom:6px; font-size:0.85em; color: var(--text-secondary, #94a3b8);">Email</label>
+                    <input type="email" id="loginEmail" required placeholder="your@email.com"
+                        style="width:100%; padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.3); color:white; font-size:1em; box-sizing:border-box;">
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label
+                        style="display:block; margin-bottom:6px; font-size:0.85em; color: var(--text-secondary, #94a3b8);">Password</label>
+                    <input type="password" id="loginPassword" required placeholder="••••••••"
+                        style="width:100%; padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.3); color:white; font-size:1em; box-sizing:border-box;">
+                </div>
+                <button type="submit" id="loginBtn"
+                    style="width:100%; padding:14px; border:none; border-radius:10px; background:linear-gradient(135deg, #3b82f6, #8b5cf6); color:white; font-size:1.05em; font-weight:600; cursor:pointer; transition: all 0.3s;">🔑
+                    Login to Dashboard</button>
+            </form>
+
+            <!-- Register Form -->
+            <form id="registerForm" class="auth-form" onsubmit="handleRegister(event)" style="display:none;">
+                <div style="margin-bottom: 15px;">
+                    <label
+                        style="display:block; margin-bottom:6px; font-size:0.85em; color: var(--text-secondary, #94a3b8);">Email</label>
+                    <input type="email" id="regEmail" required placeholder="your@email.com"
+                        style="width:100%; padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.3); color:white; font-size:1em; box-sizing:border-box;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label
+                        style="display:block; margin-bottom:6px; font-size:0.85em; color: var(--text-secondary, #94a3b8);">Password</label>
+                    <input type="password" id="regPassword" required placeholder="••••••••"
+                        style="width:100%; padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.3); color:white; font-size:1em; box-sizing:border-box;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label
+                        style="display:block; margin-bottom:6px; font-size:0.85em; color: var(--text-secondary, #94a3b8);">Device
+                        ID</label>
+                    <input type="text" id="regDeviceId" required placeholder="SH-001"
+                        style="width:100%; padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.3); color:white; font-size:1em; box-sizing:border-box;">
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label
+                        style="display:block; margin-bottom:6px; font-size:0.85em; color: var(--text-secondary, #94a3b8);">Device
+                        Name</label>
+                    <input type="text" id="regDeviceName" required placeholder="My Smart Home"
+                        style="width:100%; padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.3); color:white; font-size:1em; box-sizing:border-box;">
+                </div>
+                <button type="submit" id="registerBtn"
+                    style="width:100%; padding:14px; border:none; border-radius:10px; background:linear-gradient(135deg, #10b981, #3b82f6); color:white; font-size:1.05em; font-weight:600; cursor:pointer; transition: all 0.3s;">📱
+                    Register & Create Account</button>
+            </form>
+        </div>
+
+        <p style="text-align:center; margin-top:20px; color: var(--text-secondary, #64748b); font-size:0.85em;">
+            Powered by HomeControl BaaS — ESP32 Cloud Platform
+        </p>
+    </div>
+
     <script>
         function switchTab(tab) {
-            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+            document.querySelectorAll('.auth-tab').forEach(t => {
+                t.style.background = 'transparent';
+                t.style.color = 'var(--text-secondary, #94a3b8)';
+            });
 
             if (tab === 'login') {
-                document.querySelectorAll('.auth-tab')[0].classList.add('active');
-                document.getElementById('loginForm').classList.add('active');
+                document.querySelectorAll('.auth-tab')[0].style.background = 'var(--accent-primary, #3b82f6)';
+                document.querySelectorAll('.auth-tab')[0].style.color = 'white';
+                document.getElementById('loginForm').style.display = 'block';
+                document.getElementById('registerForm').style.display = 'none';
             } else {
-                document.querySelectorAll('.auth-tab')[1].classList.add('active');
-                document.getElementById('registerForm').classList.add('active');
+                document.querySelectorAll('.auth-tab')[1].style.background = 'var(--accent-primary, #3b82f6)';
+                document.querySelectorAll('.auth-tab')[1].style.color = 'white';
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('registerForm').style.display = 'block';
             }
             clearMessages();
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('errorMsg');
+            el.textContent = msg;
+            el.style.display = 'block';
+            document.getElementById('successMsg').style.display = 'none';
+        }
+
+        function showSuccess(msg) {
+            const el = document.getElementById('successMsg');
+            el.textContent = msg;
+            el.style.display = 'block';
+            document.getElementById('errorMsg').style.display = 'none';
+        }
+
+        function clearMessages() {
+            document.getElementById('errorMsg').style.display = 'none';
+            document.getElementById('successMsg').style.display = 'none';
         }
 
         async function handleLogin(e) {
@@ -71,7 +182,6 @@
             const password = document.getElementById('loginPassword').value;
 
             try {
-                // 1. Get Token
                 const formData = new URLSearchParams();
                 formData.append('username', email);
                 formData.append('password', password);
@@ -89,8 +199,6 @@
 
                 const data = await response.json();
                 localStorage.setItem('access_token', data.access_token);
-
-                // Redirect
                 window.location.href = 'dashboard.html';
 
             } catch (err) {
@@ -113,7 +221,6 @@
             const deviceName = document.getElementById('regDeviceName').value.trim();
 
             try {
-                // 1. Create User
                 let res = await fetch(`${API_URL}/users/`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -125,7 +232,6 @@
                     throw new Error(err.detail || 'User registration failed');
                 }
 
-                // 2. Login to get Token (to register device)
                 const formData = new URLSearchParams();
                 formData.append('username', email);
                 formData.append('password', password);
@@ -141,7 +247,6 @@
                 const token = tokenData.access_token;
                 localStorage.setItem('access_token', token);
 
-                // 3. Register Device
                 res = await fetch(`${API_URL}/devices/`, {
                     method: 'POST',
                     headers: {
@@ -157,9 +262,6 @@
 
                 if (!res.ok) {
                     const err = await res.json();
-                    // If device fails, usually means ID taken, but user is created.
-                    // Let them proceed to dashboard but show warning? Or fail?
-                    // For now, throw and let them try again (maybe just login + register device in dashboard).
                     throw new Error(err.detail || 'Device registration failed');
                 }
 
