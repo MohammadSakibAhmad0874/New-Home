@@ -1,6 +1,5 @@
 services:
-  # Render Deployment Configuration (100% Free Tier)
-  # Web Service (The API)
+  # ===== Backend API (Docker) =====
   - type: web
     name: homecontrol-backend
     env: docker
@@ -19,16 +18,12 @@ services:
       - key: ALGORITHM
         value: HS256
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
-        value: 1440 # 1 Day
+        value: "1440"
 
-databases:
-  - name: homecontrol-db
-    plan: free
-    region: oregon
-
-staticSites:
-  - type: static
+  # ===== Frontend Static Site =====
+  - type: web
     name: homecontrol-cloud
+    runtime: static
     buildCommand: echo "No build needed"
     staticPublishPath: ./cloud
     pullRequestPreviewsEnabled: false
@@ -36,3 +31,8 @@ staticSites:
       - type: rewrite
         source: /*
         destination: /index.html
+
+databases:
+  - name: homecontrol-db
+    plan: free
+    region: oregon
