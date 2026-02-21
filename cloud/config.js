@@ -1,2 +1,3 @@
-const API_URL = "https://soign-ulises-fatigueless.ngrok-free.dev/api/v1";
-const WS_URL = "wss://soign-ulises-fatigueless.ngrok-free.dev/api/v1/ws";
+const API_URL = "https://homecontrol-backend-8fbg.onrender.com/api/v1";
+const WS_URL = "wss://homecontrol-backend-8fbg.onrender.com/api/v1/ws";
+
