@@ -11,6 +11,58 @@ from api import deps
 
 router = APIRouter()
 
+@router.get("/admin/all", response_model=List[DeviceSchema])
+async def read_all_devices_admin(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_active_superuser),
+    skip: int = 0,
+    limit: int = 500,
+) -> Any:
+    """
+    [ADMIN] Retrieve ALL devices from all users.
+    """
+    result = await db.execute(
+        select(Device).offset(skip).limit(limit)
+    )
+    return result.scalars().all()
+
+@router.delete("/admin/{device_id}")
+async def admin_delete_device(
+    device_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_active_superuser),
+) -> Any:
+    """
+    [ADMIN] Delete any device by ID.
+    """
+    result = await db.execute(select(Device).filter(Device.id == device_id))
+    device = result.scalars().first()
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    await db.delete(device)
+    await db.commit()
+    return {"status": "deleted", "device_id": device_id}
+
+@router.put("/admin/{device_id}/rename")
+async def admin_rename_device(
+    device_id: str,
+    name: str = Body(..., embed=True),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_active_superuser),
+) -> Any:
+    """
+    [ADMIN] Rename any device.
+    """
+    result = await db.execute(select(Device).filter(Device.id == device_id))
+    device = result.scalars().first()
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    device.name = name
+    db.add(device)
+    await db.commit()
+    await db.refresh(device)
+    return device
+
 @router.get("/", response_model=List[DeviceSchema])
 async def read_devices(
     db: AsyncSession = Depends(get_db),
