@@ -493,38 +493,112 @@
             }
         }
 
+        // ── WebSocket state ──
+        let wsReconnectDelay = 3000;    // starts at 3s
+        let wsReconnectCount = 0;
+        const WS_MAX_RECONNECTS = 15;
+        const WS_MAX_DELAY = 30000;     // cap at 30s
+        let wsReconnectTimer = null;
+        let wsCurrentDeviceId = null;
+        let wsIntentionalClose = false;
+
         function connectWebSocket(deviceId) {
+            wsCurrentDeviceId = deviceId;
+            wsIntentionalClose = false;
+            _doConnect(deviceId);
+
+            // Page Visibility API: pause when tab is hidden (saves battery on mobile)
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    // Phone locked or app backgrounded — stop reconnect timer
+                    clearTimeout(wsReconnectTimer);
+                } else {
+                    // Screen woke up — reconnect if not already connected
+                    if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
+                        wsReconnectDelay = 3000;
+                        wsReconnectCount = 0;
+                        _doConnect(wsCurrentDeviceId);
+                    }
+                }
+            });
+        }
+
+        function _doConnect(deviceId) {
+            if (ws) { wsIntentionalClose = true; ws.close(); }
             ws = new WebSocket(`${WS_URL}/${deviceId}?token=${token}`);
 
             ws.onopen = () => {
                 console.log("WS Connected");
+                wsReconnectDelay = 3000;   // reset backoff on success
+                wsReconnectCount = 0;
                 showToast("Connected to Real-time Server", "success");
                 addActivity('WebSocket connected', 'info');
-                // Do NOT mark device online here — wait for actual ESP32 data
+                // Remove manual reconnect button if shown
+                const btn = document.getElementById('wsReconnectBtn');
+                if (btn) btn.remove();
             };
 
             ws.onmessage = (event) => {
                 const msg = JSON.parse(event.data);
                 if (msg.type === 'update') {
-                    console.log("Update received:", msg.data);
                     if (!currentDevice.start_state) currentDevice.start_state = {};
                     Object.assign(currentDevice.start_state, msg.data);
                     renderDevice(currentDevice);
-                    markDeviceOnline(); // Real ESP32 data received
+                    markDeviceOnline();
                 } else if (msg.type === 'sensor_update') {
-                    console.log("Sensor Update:", msg.data);
                     updateSensorUI(msg.data.temperature, msg.data.humidity);
-                    markDeviceOnline(); // Real ESP32 data received
+                    markDeviceOnline();
                 }
             };
 
+            ws.onerror = (e) => {
+                console.warn("WS Error", e);
+            };
+
             ws.onclose = () => {
-                console.log("WS Disconnected");
-                addActivity('WebSocket disconnected', 'offline');
+                if (wsIntentionalClose) return;   // don't reconnect if we closed it ourselves
+
                 markDeviceOffline();
-                setTimeout(() => connectWebSocket(deviceId), 3000);
+                wsReconnectCount++;
+
+                if (wsReconnectCount > WS_MAX_RECONNECTS) {
+                    // Too many failures — show manual button, stop auto-reconnect
+                    addActivity('Connection lost. Tap to reconnect.', 'offline');
+                    _showReconnectButton(deviceId);
+                    return;
+                }
+
+                // Only log once, not every single reconnect attempt
+                if (wsReconnectCount === 1) {
+                    addActivity('WebSocket disconnected — reconnecting...', 'offline');
+                }
+
+                // Exponential backoff
+                clearTimeout(wsReconnectTimer);
+                wsReconnectTimer = setTimeout(() => {
+                    if (!document.hidden) _doConnect(deviceId);
+                }, wsReconnectDelay);
+
+                wsReconnectDelay = Math.min(wsReconnectDelay * 2, WS_MAX_DELAY);
             };
         }
+
+        function _showReconnectButton(deviceId) {
+            if (document.getElementById('wsReconnectBtn')) return;
+            const container = document.getElementById('toastContainer');
+            const btn = document.createElement('button');
+            btn.id = 'wsReconnectBtn';
+            btn.textContent = '🔄 Tap to Reconnect';
+            btn.style.cssText = 'position:fixed;bottom:90px;right:20px;z-index:9999;padding:12px 20px;background:#7c3aed;color:white;border:none;border-radius:10px;cursor:pointer;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.4);';
+            btn.onclick = () => {
+                btn.remove();
+                wsReconnectDelay = 3000;
+                wsReconnectCount = 0;
+                _doConnect(deviceId);
+            };
+            document.body.appendChild(btn);
+        }
+
 
         function updateSensorUI(temp, hum) {
             if (temp !== undefined && temp !== null && temp !== "null")

@@ -22,6 +22,11 @@ class Settings(BaseSettings):
     # Integrations
     WEBHOOK_SECRET: str = "voice_secret_123"
     NTFY_TOPIC: str = "homecontrol_ghosty_alerts"
+
+    # Email (Gmail SMTP — set these in Render environment variables)
+    SMTP_EMAIL: str = ""       # e.g. yourname@gmail.com
+    SMTP_PASSWORD: str = ""    # Gmail App Password (Settings > Security > App Passwords)
+
     
     class Config:
         case_sensitive = True
