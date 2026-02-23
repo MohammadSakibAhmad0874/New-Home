@@ -733,21 +733,73 @@
 
     <!-- ═══════════ LOGIN SCREEN ═══════════ -->
     <div id="loginScreen">
-        <div class="login-card">
+        <div class="login-card" style="width:420px;">
+
+            <!-- Icon + Title -->
             <div class="big-icon">🛡️</div>
-            <h2>Admin Access</h2>
-            <p>HomeControl Super Admin Panel</p>
-            <div class="form-group" style="text-align:left">
-                <label>Email</label>
-                <input type="email" id="loginEmail" placeholder="admin@email.com" value="ahmadsakib263@gmail.com">
+            <h2 id="authTitle">Welcome Back</h2>
+            <p id="authSubtitle">HomeControl Super Admin Panel</p>
+
+            <!-- Tabs -->
+            <div
+                style="display:flex;gap:0;background:var(--bg3);border-radius:10px;padding:4px;margin-bottom:24px;border:1px solid var(--border);">
+                <button id="tabLogin" onclick="switchAuthTab('login')"
+                    style="flex:1;padding:8px;border-radius:7px;border:none;font-weight:600;font-size:0.85em;cursor:pointer;transition:all 0.2s;background:var(--accent);color:white;">
+                    🔑 Sign In
+                </button>
+                <button id="tabRegister" onclick="switchAuthTab('register')"
+                    style="flex:1;padding:8px;border-radius:7px;border:none;font-weight:600;font-size:0.85em;cursor:pointer;transition:all 0.2s;background:transparent;color:var(--muted);">
+                    ✨ Register
+                </button>
             </div>
-            <div class="form-group" style="text-align:left">
-                <label>Password</label>
-                <input type="password" id="loginPassword" placeholder="••••••••" value="MrNoor@874">
+
+            <!-- ── LOGIN FORM ── -->
+            <div id="loginForm">
+                <div class="form-group" style="text-align:left">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" placeholder="your@email.com">
+                </div>
+                <div class="form-group" style="text-align:left">
+                    <label>Password</label>
+                    <div style="position:relative;">
+                        <input type="password" id="loginPassword" placeholder="••••••••" style="padding-right:44px;">
+                        <button onclick="togglePwd('loginPassword',this)"
+                            style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:1em;">👁️</button>
+                    </div>
+                </div>
+                <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;font-size:1em;"
+                    onclick="doLogin()" id="loginBtn">Sign In →</button>
+                <div id="loginErr" class="login-err" style="margin-top:10px;"></div>
             </div>
-            <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;"
-                onclick="doLogin()">Sign In</button>
-            <div id="loginErr" class="login-err">❌ Invalid credentials or not an admin account</div>
+
+            <!-- ── REGISTER FORM ── -->
+            <div id="registerForm" style="display:none;">
+                <div class="form-group" style="text-align:left">
+                    <label>Email</label>
+                    <input type="email" id="regEmail" placeholder="your@email.com">
+                </div>
+                <div class="form-group" style="text-align:left">
+                    <label>Password</label>
+                    <div style="position:relative;">
+                        <input type="password" id="regPassword" placeholder="Min. 6 characters"
+                            style="padding-right:44px;">
+                        <button onclick="togglePwd('regPassword',this)"
+                            style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:1em;">👁️</button>
+                    </div>
+                </div>
+                <div class="form-group" style="text-align:left">
+                    <label>Confirm Password</label>
+                    <input type="password" id="regConfirm" placeholder="Repeat password">
+                </div>
+                <button class="btn btn-primary"
+                    style="width:100%;justify-content:center;padding:12px;font-size:1em;background:var(--accent2);"
+                    onclick="doRegister()" id="regBtn">Create Account ✨</button>
+                <div id="regMsg" style="margin-top:10px;font-size:0.82em;display:none;"></div>
+                <p style="color:var(--muted);font-size:0.78em;margin-top:14px;line-height:1.5;">
+                    ℹ️ After registering, ask your admin to grant superuser access if needed.
+                </p>
+            </div>
+
         </div>
     </div>
 
@@ -1544,6 +1596,93 @@
                 doLogin();
             }
         });
+        // ══════════════════════════════════════
+        // AUTH TAB SWITCHING
+        // ══════════════════════════════════════
+        function switchAuthTab(tab) {
+            const isLogin = tab === 'login';
+            document.getElementById('loginForm').style.display = isLogin ? 'block' : 'none';
+            document.getElementById('registerForm').style.display = isLogin ? 'none' : 'block';
+            document.getElementById('authTitle').textContent = isLogin ? 'Welcome Back' : 'Create Account';
+            document.getElementById('authSubtitle').textContent = isLogin ? 'HomeControl Super Admin Panel' : 'Join HomeControl platform';
+            document.getElementById('tabLogin').style.background = isLogin ? 'var(--accent)' : 'transparent';
+            document.getElementById('tabLogin').style.color = isLogin ? 'white' : 'var(--muted)';
+            document.getElementById('tabRegister').style.background = isLogin ? 'transparent' : 'var(--accent2)';
+            document.getElementById('tabRegister').style.color = isLogin ? 'var(--muted)' : 'white';
+            document.getElementById('loginErr').style.display = 'none';
+            document.getElementById('regMsg').style.display = 'none';
+        }
+
+        // ══════════════════════════════════════
+        // REGISTER
+        // ══════════════════════════════════════
+        async function doRegister() {
+            const email = document.getElementById('regEmail').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const confirm = document.getElementById('regConfirm').value;
+            const msgEl = document.getElementById('regMsg');
+            const btn = document.getElementById('regBtn');
+
+            msgEl.style.display = 'none';
+
+            if (!email || !password) {
+                msgEl.textContent = '❌ Please fill in all fields.';
+                msgEl.style.color = '#ef4444'; msgEl.style.display = 'block'; return;
+            }
+            if (password.length < 6) {
+                msgEl.textContent = '❌ Password must be at least 6 characters.';
+                msgEl.style.color = '#ef4444'; msgEl.style.display = 'block'; return;
+            }
+            if (password !== confirm) {
+                msgEl.textContent = '❌ Passwords do not match!';
+                msgEl.style.color = '#ef4444'; msgEl.style.display = 'block'; return;
+            }
+
+            btn.textContent = '⏳ Creating account...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`${API_URL}/users/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, is_superuser: false, is_active: true })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || 'Registration failed');
+                }
+
+                // ✅ Success — switch to login tab and pre-fill email
+                msgEl.textContent = '✅ Account created! Switching to login...';
+                msgEl.style.color = '#10b981';
+                msgEl.style.display = 'block';
+
+                setTimeout(() => {
+                    switchAuthTab('login');
+                    document.getElementById('loginEmail').value = email;
+                    document.getElementById('loginPassword').focus();
+                }, 1500);
+
+            } catch (e) {
+                msgEl.textContent = '❌ ' + e.message;
+                msgEl.style.color = '#ef4444';
+                msgEl.style.display = 'block';
+            } finally {
+                btn.textContent = 'Create Account ✨';
+                btn.disabled = false;
+            }
+        }
+
+        // ══════════════════════════════════════
+        // PASSWORD VISIBILITY TOGGLE
+        // ══════════════════════════════════════
+        function togglePwd(inputId, btn) {
+            const inp = document.getElementById(inputId);
+            if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+            else { inp.type = 'password'; btn.textContent = '👁️'; }
+        }
+
     </script>
 </body>
 
