@@ -118,3 +118,57 @@ async def get_device_key(secret: str, device_id: str, db: AsyncSession = Depends
         "name": device.name,
         "owner_id": device.owner_id
     }
+
+
+@router.get("/create-device")
+async def create_device(
+    secret: str,
+    device_id: str,
+    owner_id: int,
+    name: str = "New Device",
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Register a new device.
+    Call: GET /api/v1/setup/create-device?secret=homecontrol_setup_2024&device_id=SH-001&owner_id=2&name=My+Device
+    """
+    if secret != SETUP_SECRET:
+        raise HTTPException(status_code=403, detail="Invalid secret")
+
+    from db.models import Device
+    import secrets as sec
+
+    # Check if already exists
+    result = await db.execute(select(Device).where(Device.id == device_id))
+    existing = result.scalars().first()
+    if existing:
+        return {
+            "status": "already_exists",
+            "device_id": existing.id,
+            "api_key": existing.api_key,
+            "name": existing.name,
+            "owner_id": existing.owner_id,
+            "message": "Device already registered. Use the api_key shown above."
+        }
+
+    api_key = sec.token_urlsafe(32)
+    device = Device(
+        id=device_id,
+        owner_id=owner_id,
+        name=name,
+        type="esp32",
+        api_key=api_key,
+        online=False,
+    )
+    db.add(device)
+    await db.commit()
+    await db.refresh(device)
+
+    return {
+        "status": "created",
+        "device_id": device.id,
+        "api_key": device.api_key,
+        "name": device.name,
+        "owner_id": device.owner_id,
+        "message": "Device registered! Copy the api_key into your config.h"
+    }
