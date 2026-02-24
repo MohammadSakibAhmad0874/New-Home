@@ -94,9 +94,9 @@ async def delete_user(
 @router.put("/{user_id}/promote", response_model=UserSchema)
 async def promote_user(
     user_id: int,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(deps.get_current_active_superuser),
-    background_tasks: BackgroundTasks = BackgroundTasks(),
 ) -> Any:
     """
     [ADMIN] Promote a user to superuser and send them an email notification.

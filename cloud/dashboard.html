@@ -861,10 +861,25 @@
                         time: time
                     })
                 });
+                if (!res.ok) throw new Error('Server error');
                 showToast("Schedule added successfully!", "success");
                 loadSchedules();
             } catch (e) {
                 showToast("Failed to save schedule", 'error');
+            }
+        }
+
+        async function deleteSchedule(id) {
+            try {
+                const res = await fetch(`${API_URL}/schedules/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error('Server error');
+                showToast("Schedule deleted", "success");
+                loadSchedules();
+            } catch (e) {
+                showToast("Failed to delete schedule", 'error');
             }
         }
     </script>

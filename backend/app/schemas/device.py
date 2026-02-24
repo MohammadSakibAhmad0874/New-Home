@@ -28,7 +28,6 @@ class DeviceInDBBase(DeviceBase):
     online: bool
     last_seen: Optional[datetime] = None
     ip_address: Optional[str] = None
-    ip_address: Optional[str] = None
     start_state: Optional[Dict[str, Any]] = {}
     api_key: Optional[str] = None
 
