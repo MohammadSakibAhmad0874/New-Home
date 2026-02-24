@@ -876,6 +876,97 @@
         [data-theme="light"] .card::before {
             background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.5), rgba(168, 85, 247, 0.3), transparent);
         }
+
+        /* ======= DEVICE CREDENTIALS PANEL ======= */
+        .creds-panel {
+            display: none;
+            margin-top: 18px;
+            padding: 20px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(168, 85, 247, 0.06));
+            border: 1px solid rgba(99, 102, 241, 0.22);
+            animation: fadeUp 0.4s ease;
+        }
+
+        .creds-panel.show {
+            display: block;
+        }
+
+        .creds-title {
+            font-size: 0.9em;
+            font-weight: 700;
+            color: #818cf8;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .cred-row {
+            margin-bottom: 12px;
+        }
+
+        .cred-label {
+            font-size: 0.72em;
+            font-weight: 700;
+            color: var(--t3);
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            margin-bottom: 5px;
+        }
+
+        .cred-copy {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--inp);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 9px 12px;
+        }
+
+        .cred-val {
+            flex: 1;
+            font-family: 'Courier New', monospace;
+            font-size: 0.82em;
+            color: #a5b4fc;
+            word-break: break-all;
+            letter-spacing: 0.03em;
+        }
+
+        .copy-btn {
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            border-radius: 7px;
+            color: #818cf8;
+            font-size: 0.75em;
+            font-weight: 700;
+            padding: 5px 10px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .copy-btn:hover {
+            background: rgba(99, 102, 241, 0.28);
+            color: #c4b5fd;
+        }
+
+        .copy-btn.copied {
+            background: rgba(34, 197, 94, 0.15);
+            border-color: rgba(34, 197, 94, 0.3);
+            color: #4ade80;
+        }
+
+        .creds-warning {
+            font-size: 0.76em;
+            color: #f59e0b;
+            margin-top: 12px;
+            display: flex;
+            gap: 6px;
+            line-height: 1.5;
+        }
     </style>
 </head>
 
@@ -999,6 +1090,39 @@
                     </div>
                 </div>
                 <button class="btn-submit green" id="regBtn" onclick="doRegister()">Create Account ✨</button>
+
+                <!-- Device Credentials Panel (shown after registration) -->
+                <div class="creds-panel" id="credsPanel">
+                    <div class="creds-title">🔐 Save Your Device Credentials</div>
+                    <div class="cred-row">
+                        <div class="cred-label">Device Name</div>
+                        <div class="cred-copy">
+                            <span class="cred-val" id="credDeviceName">—</span>
+                        </div>
+                    </div>
+                    <div class="cred-row">
+                        <div class="cred-label">Device ID <span
+                                style="font-weight:400;text-transform:none;letter-spacing:0">(put in firmware)</span>
+                        </div>
+                        <div class="cred-copy">
+                            <span class="cred-val" id="credDeviceId">—</span>
+                            <button class="copy-btn" onclick="copyVal('credDeviceId',this)">Copy</button>
+                        </div>
+                    </div>
+                    <div class="cred-row">
+                        <div class="cred-label">API Key <span
+                                style="font-weight:400;text-transform:none;letter-spacing:0">(put in firmware)</span>
+                        </div>
+                        <div class="cred-copy">
+                            <span class="cred-val" id="credApiKey">—</span>
+                            <button class="copy-btn" onclick="copyVal('credApiKey',this)">Copy</button>
+                        </div>
+                    </div>
+                    <div class="creds-warning">⚠️ Copy these now — the API Key is only shown once. Paste both into your
+                        ESP32 firmware config.</div>
+                    <button class="btn-submit" style="margin-top:16px;font-size:0.9em;padding:12px"
+                        onclick="switchTab('login')">Done — Sign In →</button>
+                </div>
             </div>
 
             <!-- Forgot Password Form -->
@@ -1152,7 +1276,7 @@
             btn.innerHTML = '<span class="btn-spinner"></span>Signing in…';
             try {
                 const body = new URLSearchParams({ username: email, password: pass });
-                const res = await fetch(`${API_URL}/auth/token`, { method: 'POST', body });
+                const res = await fetch(`${API_URL}/auth/login/access-token`, { method: 'POST', body });
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.detail || 'Invalid credentials');
                 localStorage.setItem('access_token', data.access_token);
@@ -1189,34 +1313,62 @@
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.detail || 'Registration failed');
 
-                // 2️⃣ Log in to get a token so we can register the device
+                // 2️⃣ Login to get token, then register the first device
+                let createdDeviceId = null, createdApiKey = null;
                 if (device) {
                     try {
                         const loginBody = new URLSearchParams({ username: email, password: pass });
                         const loginRes = await fetch(`${API_URL}/auth/login/access-token`, { method: 'POST', body: loginBody });
                         if (loginRes.ok) {
-                            const loginData = await loginRes.json();
-                            const token = loginData.access_token;
-                            // Auto-generate a device id from name
-                            const deviceId = 'DEV-' + Math.random().toString(36).slice(2, 8).toUpperCase();
-                            await fetch(`${API_URL}/devices/`, {
+                            const { access_token } = await loginRes.json();
+                            // Use SH- prefix format matching real devices
+                            createdDeviceId = 'SH-' + Math.random().toString(36).slice(2, 5).toUpperCase();
+                            const devRes = await fetch(`${API_URL}/devices/`, {
                                 method: 'POST',
-                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                                body: JSON.stringify({ device_id: deviceId, name: device })
+                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${access_token}` },
+                                body: JSON.stringify({ id: createdDeviceId, name: device, type: 'esp32' })
                             });
+                            if (devRes.ok) {
+                                const devData = await devRes.json();
+                                createdApiKey = devData.api_key || null;
+                            } else {
+                                createdDeviceId = null; // reset if failed
+                            }
                         }
-                    } catch (_) { /* Device creation is optional, ignore errors */ }
+                    } catch (_) { createdDeviceId = null; }
                 }
 
-                showMsg('regMsg', '✅ Account created! Please sign in.', 'success');
-                document.getElementById('regMsg').className = 'msg msg-success';
-                setTimeout(() => switchTab('login'), 1800);
+                // 3️⃣ Show success + credentials
+                showMsg('regMsg', '✅ Account created successfully!', 'success');
+                if (createdDeviceId) {
+                    showCredentials(device, createdDeviceId, createdApiKey);
+                } else {
+                    setTimeout(() => switchTab('login'), 1800);
+                }
             } catch (e) {
                 showMsg('regMsg', e.message);
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = 'Create Account ✨';
             }
+        }
+
+        function showCredentials(deviceName, deviceId, apiKey) {
+            const panel = document.getElementById('credsPanel');
+            document.getElementById('credDeviceName').textContent = deviceName;
+            document.getElementById('credDeviceId').textContent = deviceId;
+            document.getElementById('credApiKey').textContent = apiKey || '(check Admin Panel)';
+            panel.classList.add('show');
+            panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function copyVal(id, btn) {
+            const val = document.getElementById(id).textContent;
+            navigator.clipboard.writeText(val).then(() => {
+                btn.textContent = '✔ Copied!';
+                btn.classList.add('copied');
+                setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+            });
         }
 
         // Enter key on login email
