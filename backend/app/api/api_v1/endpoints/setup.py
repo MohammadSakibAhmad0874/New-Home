@@ -16,8 +16,8 @@ router = APIRouter()
 # ─── CHANGE THIS SECRET if you want more security ───
 SETUP_SECRET = "homecontrol_setup_2024"
 
-ADMIN_EMAIL    = "ahmadsakib263@gmail.com"
-ADMIN_PASSWORD = "MrNoor@874"
+ADMIN_EMAIL    = "admin@homecontrol.com"
+ADMIN_PASSWORD = "Admin123@"
 
 @router.get("/create-admin")
 async def create_admin(secret: str, db: AsyncSession = Depends(get_db)):
