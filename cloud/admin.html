@@ -1114,7 +1114,7 @@
                 form.append('username', email);
                 form.append('password', pass);
 
-                const tokenRes = await fetch(`${API_URL}/auth/login/access-token`, { method: 'POST', body: form });
+                const tokenRes = await fetch(`${API_URL}/login/access-token`, { method: 'POST', body: form });
                 if (!tokenRes.ok) {
                     const e = await tokenRes.json();
                     throw new Error(e.detail || `Error ${tokenRes.status}`);
