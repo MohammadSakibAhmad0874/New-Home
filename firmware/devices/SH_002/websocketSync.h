@@ -19,7 +19,9 @@ using namespace websockets;
 WebsocketsClient client;
 bool isConnected = false;
 unsigned long lastPingTime = 0;
-const unsigned long PING_INTERVAL = 30000; // 30s heartbeat
+unsigned long lastReconnectAttempt = 0;
+const unsigned long PING_INTERVAL = 25000;      // 25s heartbeat
+const unsigned long RECONNECT_INTERVAL = 10000; // retry every 10s if disconnected
 
 // Forward declarations
 void sendStateUpdate();
@@ -149,8 +151,6 @@ void sendStateUpdate() {
     String jsonString;
     serializeJson(doc, jsonString);
     client.send(jsonString);
-    serializeJson(doc, jsonString);
-    client.send(jsonString);
 }
 
 void sendSensorData(float temperature, float humidity) {
@@ -158,15 +158,15 @@ void sendSensorData(float temperature, float humidity) {
     
     StaticJsonDocument<256> doc;
     doc["type"] = "sensor_update";
-    
+
     JsonObject data = doc.createNestedObject("data");
-    // Handle NaN
-    if (isnan(temperature)) data["temperature"] = "null";
+    // Send null (not string "null") for NaN readings
+    if (isnan(temperature)) data["temperature"] = nullptr;
     else data["temperature"] = temperature;
-    
-    if (isnan(humidity)) data["humidity"] = "null";
+
+    if (isnan(humidity)) data["humidity"] = nullptr;
     else data["humidity"] = humidity;
-    
+
     String jsonString;
     serializeJson(doc, jsonString);
     client.send(jsonString);
@@ -175,10 +175,23 @@ void sendSensorData(float temperature, float humidity) {
 
 // Call this in loop()
 void cloudSyncLoop() {
-    if(WiFi.status() == WL_CONNECTED) {
-        client.poll(); // Keep connection alive
-        sendHeartbeat();
+    if (WiFi.status() != WL_CONNECTED) return;
+
+    client.poll(); // Must always poll even if reconnecting
+
+    if (!isConnected) {
+        // Auto-reconnect with throttle
+        if (millis() - lastReconnectAttempt > RECONNECT_INTERVAL) {
+            lastReconnectAttempt = millis();
+            #if ENABLE_SERIAL_DEBUG
+            Serial.println("🔄 WS reconnecting...");
+            #endif
+            initWebSocket();
+        }
+        return;
     }
+
+    sendHeartbeat();
 }
 
 // Helper to replace the one in firebaseSync.h

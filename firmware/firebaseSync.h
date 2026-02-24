@@ -24,7 +24,7 @@
 #define FIREBASE_AUTH "YOUR_DATABASE_SECRET_HERE"
 
 // Unique Device ID — must match what you registered on the web app
-#define DEVICE_ID "SH-001"
+#define DEVICE_ID "SH-004"
 
 // ==================== Sync Settings ====================
 unsigned long lastSyncTime = 0;

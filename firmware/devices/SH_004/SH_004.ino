@@ -249,12 +249,10 @@ void loop() {
         Serial.print(F("%  Temperature: "));
         Serial.print(t);
         Serial.println(F("°C"));
-        
-        // Send to Backend
-        sendSensorData(t, h);
       }
       #endif
-      
+
+      // Send sensor data once (not twice)
       if (!isnan(h) && !isnan(t)) {
          sendSensorData(t, h);
       }
@@ -326,14 +324,14 @@ void setupWebServer() {
   
   // API endpoints for programmatic access
   server.on("/api/status", HTTP_GET, handleStatus);
-  server.on("/api/relay1/on", HTTP_GET, []() { setRelay(0, true); server.send(200, "application/json", getRelayStatesJSON()); });
-  server.on("/api/relay1/off", HTTP_GET, []() { setRelay(0, false); server.send(200, "application/json", getRelayStatesJSON()); });
-  server.on("/api/relay2/on", HTTP_GET, []() { setRelay(1, true); server.send(200, "application/json", getRelayStatesJSON()); });
-  server.on("/api/relay2/off", HTTP_GET, []() { setRelay(1, false); server.send(200, "application/json", getRelayStatesJSON()); });
-  server.on("/api/relay3/on", HTTP_GET, []() { setRelay(2, true); server.send(200, "application/json", getRelayStatesJSON()); });
-  server.on("/api/relay3/off", HTTP_GET, []() { setRelay(2, false); server.send(200, "application/json", getRelayStatesJSON()); });
-  server.on("/api/relay4/on", HTTP_GET, []() { setRelay(3, true); server.send(200, "application/json", getRelayStatesJSON()); });
-  server.on("/api/relay4/off", HTTP_GET, []() { setRelay(3, false); server.send(200, "application/json", getRelayStatesJSON()); });
+  server.on("/api/relay1/on",  HTTP_GET, []() { setRelay(0, true);  notifyCloudStateChange(0, true);  server.send(200, "application/json", getRelayStatesJSON()); });
+  server.on("/api/relay1/off", HTTP_GET, []() { setRelay(0, false); notifyCloudStateChange(0, false); server.send(200, "application/json", getRelayStatesJSON()); });
+  server.on("/api/relay2/on",  HTTP_GET, []() { setRelay(1, true);  notifyCloudStateChange(1, true);  server.send(200, "application/json", getRelayStatesJSON()); });
+  server.on("/api/relay2/off", HTTP_GET, []() { setRelay(1, false); notifyCloudStateChange(1, false); server.send(200, "application/json", getRelayStatesJSON()); });
+  server.on("/api/relay3/on",  HTTP_GET, []() { setRelay(2, true);  notifyCloudStateChange(2, true);  server.send(200, "application/json", getRelayStatesJSON()); });
+  server.on("/api/relay3/off", HTTP_GET, []() { setRelay(2, false); notifyCloudStateChange(2, false); server.send(200, "application/json", getRelayStatesJSON()); });
+  server.on("/api/relay4/on",  HTTP_GET, []() { setRelay(3, true);  notifyCloudStateChange(3, true);  server.send(200, "application/json", getRelayStatesJSON()); });
+  server.on("/api/relay4/off", HTTP_GET, []() { setRelay(3, false); notifyCloudStateChange(3, false); server.send(200, "application/json", getRelayStatesJSON()); });
   
   // All OFF safety endpoint
   server.on("/api/alloff", HTTP_GET, []() { 

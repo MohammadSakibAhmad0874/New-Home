@@ -19,7 +19,7 @@ const char* AP_PASSWORD = "12345678";  // Change this!
 // so ANY device can connect directly — no matter what network!
 // Connect to this WiFi → open 192.168.4.1 in browser
 #define ENABLE_ALWAYS_ON_AP true
-const char* HOTSPOT_SSID = "SmartHome_Control";
+const char* HOTSPOT_SSID = "SmartHome_SH001";
 const char* HOTSPOT_PASSWORD = "12345678";  // Change this!
 
 // ============= Device Configuration =============
@@ -29,8 +29,8 @@ const int WEB_SERVER_PORT = 80;
 // ============= Backend Configuration =============
 const char* BACKEND_HOST = "homecontrol-backend-8fbg.onrender.com";
 const int   BACKEND_PORT = 443;             // 80 for HTTP, 443 for HTTPS
-const char* DEVICE_ID = "SH-004";           // Must match DB
-const char* DEVICE_API_KEY = "w4-pAklxGTWMd38QUNJ_UEW-NC0_NQXKx2p3vb42Fto"; // From POST /devices/
+const char* DEVICE_ID = "SH-001";           // Must match DB
+const char* DEVICE_API_KEY = "o9DSzogoo_UX0H5iEDsPM8zrLyXdSv8B1a31Hmc2Qs4"; // From POST /devices/
 const bool  BACKEND_SECURE = true;          // true = wss://, false = ws://
 
 // ============= GPIO Pin Configuration =============
