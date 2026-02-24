@@ -39,12 +39,26 @@ async def on_startup():
     print("🚀 Starting Application...")
     print(f"🔌 Connecting to DB: {settings.DATABASE_URL}")
     from db.session import engine, Base
+    from sqlalchemy import text
     try:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         print("✅ Database tables created.")
     except Exception as e:
         print(f"❌ DB Init Failed: {e}")
+
+    # ── Safe column migrations (ADD IF NOT EXISTS) ──────────────────────────
+    # These are idempotent — safe to run on every startup.
+    migrations = [
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS full_name VARCHAR;",
+    ]
+    try:
+        async with engine.begin() as conn:
+            for sql in migrations:
+                await conn.execute(text(sql))
+                print(f"✅ Migration OK: {sql.strip()}")
+    except Exception as e:
+        print(f"⚠️  Migration warning (non-fatal): {e}")
         
     # Start Schedulers
     import asyncio
