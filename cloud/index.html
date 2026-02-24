@@ -957,6 +957,14 @@
             <div class="form-view" id="view-register">
                 <div id="regMsg" class="msg msg-error"></div>
                 <div class="field">
+                    <label class="field-label">Full Name</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">👤</span>
+                        <input class="field-input" id="regName" type="text" placeholder="Your full name"
+                            autocomplete="name">
+                    </div>
+                </div>
+                <div class="field">
                     <label class="field-label">Email Address</label>
                     <div class="input-wrap">
                         <span class="input-icon">📧</span>
@@ -965,11 +973,20 @@
                     </div>
                 </div>
                 <div class="field">
+                    <label class="field-label">Device Name <span
+                            style="font-size:0.85em;color:var(--t3);font-weight:400;text-transform:none;letter-spacing:0">(optional
+                            — e.g. Living Room ESP32)</span></label>
+                    <div class="input-wrap">
+                        <span class="input-icon">📱</span>
+                        <input class="field-input" id="regDevice" type="text" placeholder="e.g. Living Room Controller">
+                    </div>
+                </div>
+                <div class="field">
                     <label class="field-label">Password</label>
                     <div class="input-wrap">
                         <span class="input-icon">🔒</span>
                         <input class="field-input has-pw" id="regPass" type="password" placeholder="Min. 6 characters">
-                        <button class="pw-toggle" onclick="togglePw('regPass',this)">👁️</button>
+                        <button class="pw-toggle" type="button" onclick="togglePw('regPass',this)">👁️</button>
                     </div>
                 </div>
                 <div class="field">
@@ -978,7 +995,7 @@
                         <span class="input-icon">🔒</span>
                         <input class="field-input has-pw" id="regConfirm" type="password" placeholder="Repeat password"
                             onkeydown="if(event.key==='Enter')doRegister()">
-                        <button class="pw-toggle" onclick="togglePw('regConfirm',this)">👁️</button>
+                        <button class="pw-toggle" type="button" onclick="togglePw('regConfirm',this)">👁️</button>
                     </div>
                 </div>
                 <button class="btn-submit green" id="regBtn" onclick="doRegister()">Create Account ✨</button>
@@ -1150,26 +1167,50 @@
 
         /* ======= REGISTER ======= */
         async function doRegister() {
+            const name = document.getElementById('regName').value.trim();
             const email = document.getElementById('regEmail').value.trim();
+            const device = document.getElementById('regDevice').value.trim();
             const pass = document.getElementById('regPass').value;
             const conf = document.getElementById('regConfirm').value;
             hideMsg('regMsg');
-            if (!email || !pass || !conf) { showMsg('regMsg', 'Please fill all fields.'); return; }
+            if (!name) { showMsg('regMsg', 'Please enter your full name.'); return; }
+            if (!email || !pass || !conf) { showMsg('regMsg', 'Please fill all required fields.'); return; }
             if (pass !== conf) { showMsg('regMsg', 'Passwords do not match!'); return; }
             if (pass.length < 6) { showMsg('regMsg', 'Password must be at least 6 characters.'); return; }
             const btn = document.getElementById('regBtn');
             btn.disabled = true;
-            btn.innerHTML = '<span class="btn-spinner"></span>Creating…';
+            btn.innerHTML = '<span class="btn-spinner"></span>Creating account…';
             try {
-                const res = await fetch(`${API_URL}/auth/register`, {
+                // 1️⃣ Create the user account
+                const res = await fetch(`${API_URL}/users/`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password: pass })
+                    body: JSON.stringify({ email, password: pass, full_name: name })
                 });
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.detail || 'Registration failed');
-                showMsg('regMsg', 'Account created! Please sign in.', 'success');
+
+                // 2️⃣ Log in to get a token so we can register the device
+                if (device) {
+                    try {
+                        const loginBody = new URLSearchParams({ username: email, password: pass });
+                        const loginRes = await fetch(`${API_URL}/auth/login/access-token`, { method: 'POST', body: loginBody });
+                        if (loginRes.ok) {
+                            const loginData = await loginRes.json();
+                            const token = loginData.access_token;
+                            // Auto-generate a device id from name
+                            const deviceId = 'DEV-' + Math.random().toString(36).slice(2, 8).toUpperCase();
+                            await fetch(`${API_URL}/devices/`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                                body: JSON.stringify({ device_id: deviceId, name: device })
+                            });
+                        }
+                    } catch (_) { /* Device creation is optional, ignore errors */ }
+                }
+
+                showMsg('regMsg', '✅ Account created! Please sign in.', 'success');
                 document.getElementById('regMsg').className = 'msg msg-success';
-                setTimeout(() => switchTab('login'), 1500);
+                setTimeout(() => switchTab('login'), 1800);
             } catch (e) {
                 showMsg('regMsg', e.message);
             } finally {

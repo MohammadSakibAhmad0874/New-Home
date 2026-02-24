@@ -4,6 +4,7 @@ from typing import Optional
 # Shared properties
 class UserBase(BaseModel):
     email: Optional[EmailStr] = None
+    full_name: Optional[str] = None
     is_active: Optional[bool] = True
     is_superuser: bool = False
 
@@ -11,6 +12,7 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     email: EmailStr
     password: str
+    full_name: Optional[str] = None
 
 # Properties to receive via API on update
 class UserUpdate(UserBase):
