@@ -95,3 +95,26 @@ async def delete_users(secret: str, ids: str, db: AsyncSession = Depends(get_db)
         "count": len(deleted),
         "message": f"Deleted {len(deleted)} user(s). You can remove this endpoint now."
     }
+
+
+@router.get("/device-key")
+async def get_device_key(secret: str, device_id: str, db: AsyncSession = Depends(get_db)):
+    """
+    Lookup API key for a device.
+    Call: GET /api/v1/setup/device-key?secret=homecontrol_setup_2024&device_id=SH-004
+    """
+    if secret != SETUP_SECRET:
+        raise HTTPException(status_code=403, detail="Invalid secret")
+
+    from db.models import Device
+    result = await db.execute(select(Device).where(Device.id == device_id))
+    device = result.scalars().first()
+    if not device:
+        raise HTTPException(status_code=404, detail=f"Device '{device_id}' not found")
+
+    return {
+        "device_id": device.id,
+        "api_key": device.api_key,
+        "name": device.name,
+        "owner_id": device.owner_id
+    }
