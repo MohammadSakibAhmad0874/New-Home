@@ -1273,29 +1273,49 @@
         // ═══════════════════════════════════════════
         // OVERVIEW
         // ═══════════════════════════════════════════
-        async function loadOverview() {
+        async function safeJson(url, headers) {
             try {
-                const [usersR, devsR] = await Promise.all([
-                    fetch(`${API_URL}/users/`, { headers: authH() }),
-                    fetch(`${API_URL}/devices/admin/all`, { headers: authH() }),
-                ]);
-                const users = usersR.ok ? await usersR.json() : [];
-                const devices = devsR.ok ? await devsR.json() : [];
+                const r = await fetch(url, { headers });
+                if (!r.ok) return null;
+                return await r.json();
+            } catch (e) {
+                console.warn('Fetch failed:', url, e.message);
+                return null;
+            }
+        }
 
-                document.getElementById('statUsers').textContent = users.length;
-                document.getElementById('statDevices').textContent = devices.length;
-                document.getElementById('statOnline').textContent = devices.filter(d => d.online).length;
-                document.getElementById('statAdmins').textContent = users.filter(u => u.is_superuser).length;
+        async function loadOverview() {
+            // Reset recent devices to loading immediately
+            document.getElementById('recentDevices').innerHTML =
+                '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px;">Loading...</td></tr>';
 
-                const recent = devices.slice(0, 6);
-                document.getElementById('recentDevices').innerHTML = recent.length ? recent.map(d => `
+            // Fetch users and devices INDEPENDENTLY — one failure never blocks the other
+            const [users, devices] = await Promise.all([
+                safeJson(`${API_URL}/users/`, authH()),
+                safeJson(`${API_URL}/devices/admin/all`, authH()),
+            ]);
+
+            // ── Stat cards ──
+            document.getElementById('statUsers').textContent = users ? users.length : '?';
+            document.getElementById('statDevices').textContent = devices ? devices.length : '?';
+            document.getElementById('statOnline').textContent = devices ? devices.filter(d => d.online).length : '?';
+            document.getElementById('statAdmins').textContent = users ? users.filter(u => u.is_superuser).length : '?';
+
+            // ── Recent Devices table ──
+            if (!devices) {
+                document.getElementById('recentDevices').innerHTML =
+                    '<tr><td colspan="4" style="text-align:center;color:var(--danger);padding:20px;">⚠️ Could not load devices — backend may be waking up, try Refresh</td></tr>';
+                return;
+            }
+            const recent = devices.slice(0, 6);
+            document.getElementById('recentDevices').innerHTML = recent.length ? recent.map(d => `
                 <tr>
                     <td class="mono">${d.id}</td>
                     <td>${d.name || '—'}</td>
                     <td>${d.type || '—'}</td>
                     <td><span class="badge ${d.online ? 'badge-on' : 'badge-off'}">${d.online ? '🟢 Online' : '⚫ Offline'}</span></td>
-                </tr>`).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px;">No devices</td></tr>';
-            } catch { }
+                </tr>`).join('') :
+                '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px;">No devices registered yet</td></tr>';
         }
 
         // ═══════════════════════════════════════════
@@ -1303,14 +1323,14 @@
         // ═══════════════════════════════════════════
         async function loadDevices() {
             document.getElementById('devicesTable').innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px;">Loading...</td></tr>';
-            try {
-                const r = await fetch(`${API_URL}/devices/admin/all`, { headers: authH() });
-                if (!r.ok) throw new Error(`HTTP ${r.status}`);
-                allDevices = await r.json();
-                renderDevices(allDevices);
-            } catch (e) {
-                document.getElementById('devicesTable').innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--danger);padding:24px;">Error: ${e.message}</td></tr>`;
+            const data = await safeJson(`${API_URL}/devices/admin/all`, authH());
+            if (!data) {
+                document.getElementById('devicesTable').innerHTML =
+                    '<tr><td colspan="8" style="text-align:center;color:var(--danger);padding:24px;">⚠️ Could not load devices. Backend may be waking up — wait 30s and click Refresh.</td></tr>';
+                return;
             }
+            allDevices = data;
+            renderDevices(allDevices);
         }
 
         function renderDevices(list) {
