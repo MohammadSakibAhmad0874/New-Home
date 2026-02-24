@@ -33,8 +33,8 @@ async def create_user(
 
     user = User(
         email=user_in.email,
-        full_name=user_in.full_name,
         hashed_password=get_password_hash(user_in.password),
+        full_name=user_in.full_name,
         is_active=user_in.is_active,
         is_superuser=user_in.is_superuser,
     )

@@ -17,6 +17,14 @@
 #include <WiFi.h>
 #include <WebServer.h>
 #include <DNSServer.h>
+#include <DHT.h>
+#include <HTTPUpdate.h>
+
+// ESP32 Arduino Core v3.x renamed httpUpdate → ESPhttpUpdate
+#if defined(ESP_ARDUINO_VERSION_MAJOR) && ESP_ARDUINO_VERSION_MAJOR >= 3
+  #define httpUpdate ESPhttpUpdate
+#endif
+#include <HTTPClient.h>
 #include "config.h"
 #include "relayControl.h"
 #include "wifiManager.h"
@@ -27,6 +35,11 @@
 
 // #include "firebaseSync.h"
 #include "websocketSync.h" // Requires ArduinoWebsockets library
+
+// DHT Sensor
+DHT dht(DHT_PIN, DHT_TYPE);
+unsigned long lastSensorRead = 0;
+const long SENSOR_INTERVAL = 30000; // 30 seconds
 
 WebServer server(WEB_SERVER_PORT);
 
@@ -58,12 +71,6 @@ void startMDNS() {
   }
   #endif
 }
-
-/*
- * Setup Function - Runs once at startup
- */
-#include <HTTPUpdate.h>
-#include <HTTPClient.h>
 
 // Current Firmware Version
 const char* CURRENT_VERSION = "1.0.0";
@@ -108,7 +115,7 @@ void checkForUpdates() {
           Serial.println("New firmware found! Downloading from: " + downloadUrl);
           #endif
           
-          t_httpUpdate_return ret = httpUpdate.update(client, downloadUrl);
+          t_httpUpdate_return ret = httpUpdate.update(client, downloadUrl);  // httpUpdate is aliased above for v3.x
           
           switch (ret) {
             case HTTP_UPDATE_FAILED:
@@ -145,6 +152,10 @@ void checkForUpdates() {
   }
 }
 
+/*
+ * Setup Function - Runs once at startup
+ */
+
 void setup() {
   // Initialize serial communication
   #if ENABLE_SERIAL_DEBUG
@@ -173,7 +184,7 @@ void setup() {
   // Start mDNS for device discovery (only when connected to WiFi)
   if (!portalActive && wifiConnected) {
     startMDNS();
-  // Start Cloud Sync (WebSocket)
+    // Start Cloud Sync (WebSocket)
     checkForUpdates();
     initWebSocket();
   }
@@ -217,11 +228,7 @@ void setup() {
 /*
  * Main Loop - Runs continuously
  */
-#include <DHT.h>
 
-DHT dht(DHT_PIN, DHT_TYPE);
-unsigned long lastSensorRead = 0;
-const long SENSOR_INTERVAL = 30000; // 30 seconds
 
 void loop() {
   // Handle web server requests

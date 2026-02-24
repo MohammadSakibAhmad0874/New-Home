@@ -23,9 +23,8 @@ class Settings(BaseSettings):
     WEBHOOK_SECRET: str = "voice_secret_123"
     NTFY_TOPIC: str = "homecontrol_ghosty_alerts"
 
-    # Email (Gmail SMTP — set these in Render environment variables)
-    SMTP_EMAIL: str = ""       # e.g. yourname@gmail.com
-    SMTP_PASSWORD: str = ""    # Gmail App Password (Settings > Security > App Passwords)
+    # Email (Resend.com — sign up free at resend.com, set this in Render env vars)
+    RESEND_API_KEY: str = ""    # e.g. re_xxxxxxxxxxxxxxxx
 
     
     class Config:

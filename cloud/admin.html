@@ -1,1589 +1,198 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HomeControl – Super Admin Panel</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
-        rel="stylesheet">
-    <style>
-        :root {
-            --bg: #0a0a0f;
-            --bg2: #111118;
-            --bg3: #1a1a26;
-            --border: rgba(255, 255, 255, 0.07);
-            --accent: #7c3aed;
-            --accent2: #06b6d4;
-            --accent3: #10b981;
-            --danger: #ef4444;
-            --warn: #f59e0b;
-            --text: #f1f5f9;
-            --muted: #64748b;
-            --radius: 12px;
-        }
-
-        *,
-        *::before,
-        *::after {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* ── LOGIN ── */
-        #loginScreen {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            background: radial-gradient(ellipse at 60% 40%, rgba(124, 58, 237, .12) 0%, transparent 60%),
-                radial-gradient(ellipse at 20% 80%, rgba(6, 182, 212, .08) 0%, transparent 50%), var(--bg);
-        }
-
-        .login-card {
-            width: 420px;
-            background: var(--bg2);
-            border-radius: 20px;
-            border: 1px solid var(--border);
-            padding: 36px;
-            box-shadow: 0 32px 80px rgba(0, 0, 0, .6);
-        }
-
-        .login-card .big-icon {
-            font-size: 2.8em;
-            text-align: center;
-            margin-bottom: 12px;
-        }
-
-        .login-card h2 {
-            text-align: center;
-            font-size: 1.5em;
-            font-weight: 700;
-        }
-
-        .login-card>p {
-            text-align: center;
-            color: var(--muted);
-            font-size: .85em;
-            margin: 4px 0 24px;
-        }
-
-        .tabs {
-            display: flex;
-            background: var(--bg3);
-            border-radius: 10px;
-            padding: 4px;
-            margin-bottom: 24px;
-            border: 1px solid var(--border);
-        }
-
-        .tabs button {
-            flex: 1;
-            padding: 8px;
-            border-radius: 7px;
-            border: none;
-            font-weight: 600;
-            font-size: .84em;
-            cursor: pointer;
-            transition: all .2s;
-        }
-
-        .tab-active {
-            background: var(--accent);
-            color: #fff;
-        }
-
-        .tab-inactive {
-            background: transparent;
-            color: var(--muted);
-        }
-
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: .82em;
-            font-weight: 600;
-            color: var(--muted);
-            margin-bottom: 6px;
-            text-transform: uppercase;
-            letter-spacing: .04em;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 11px 14px;
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            color: var(--text);
-            font-size: .95em;
-            font-family: inherit;
-            outline: none;
-            transition: border .2s;
-        }
-
-        .form-group input:focus {
-            border-color: var(--accent);
-        }
-
-        .pw-wrap {
-            position: relative;
-        }
-
-        .pw-wrap input {
-            padding-right: 44px;
-        }
-
-        .pw-toggle {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: var(--muted);
-            font-size: 1em;
-        }
-
-        .auth-msg {
-            font-size: .82em;
-            margin-top: 10px;
-            display: none;
-        }
-
-        .auth-msg.err {
-            color: var(--danger);
-        }
-
-        .auth-msg.ok {
-            color: var(--accent3);
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            padding: 9px 16px;
-            border-radius: 9px;
-            border: none;
-            font-family: inherit;
-            font-weight: 600;
-            font-size: .88em;
-            cursor: pointer;
-            transition: all .2s;
-        }
-
-        .btn-primary {
-            background: var(--accent);
-            color: #fff;
-        }
-
-        .btn-primary:hover {
-            background: #6d28d9;
-        }
-
-        .btn-cyan {
-            background: var(--accent2);
-            color: #fff;
-        }
-
-        .btn-cyan:hover {
-            opacity: .85;
-        }
-
-        .btn-danger {
-            background: transparent;
-            border: 1px solid var(--danger);
-            color: var(--danger);
-        }
-
-        .btn-danger:hover {
-            background: var(--danger);
-            color: #fff;
-        }
-
-        .btn-ghost {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text);
-        }
-
-        .btn-ghost:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-
-        .btn-full {
-            width: 100%;
-            justify-content: center;
-            padding: 12px;
-            font-size: .96em;
-        }
-
-        .btn-sm {
-            padding: 6px 12px;
-            font-size: .8em;
-        }
-
-        /* ── SIDEBAR ── */
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 240px;
-            height: 100vh;
-            background: var(--bg2);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            padding: 24px 0;
-            z-index: 100;
-        }
-
-        .logo {
-            padding: 0 20px 20px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .logo-icon {
-            width: 36px;
-            height: 36px;
-            background: linear-gradient(135deg, var(--accent), var(--accent2));
-            border-radius: 9px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 17px;
-        }
-
-        .logo h2 {
-            font-size: .97em;
-            font-weight: 700;
-        }
-
-        .logo span {
-            font-size: .62em;
-            color: var(--accent2);
-            letter-spacing: .05em;
-            font-weight: 600;
-        }
-
-        .nav {
-            padding: 12px 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-            flex: 1;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 12px;
-            border-radius: 9px;
-            border: none;
-            background: none;
-            color: var(--muted);
-            font-family: inherit;
-            font-size: .88em;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all .18s;
-            text-decoration: none;
-            width: 100%;
-            text-align: left;
-        }
-
-        .nav-item:hover {
-            background: var(--bg3);
-            color: var(--text);
-        }
-
-        .nav-item.active {
-            background: rgba(124, 58, 237, .15);
-            color: var(--accent);
-        }
-
-        .nav-icon {
-            font-size: 1.1em;
-            width: 20px;
-            text-align: center;
-        }
-
-        .sidebar-footer {
-            padding: 14px 16px;
-            border-top: 1px solid var(--border);
-        }
-
-        .admin-badge {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .av {
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent), var(--accent2));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: .78em;
-            font-weight: 700;
-            flex-shrink: 0;
-        }
-
-        .admin-badge .info {
-            flex: 1;
-            overflow: hidden;
-        }
-
-        .admin-badge .name {
-            font-size: .82em;
-            font-weight: 600;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .admin-badge .role {
-            font-size: .68em;
-            color: var(--accent2);
-            text-transform: uppercase;
-            letter-spacing: .05em;
-        }
-
-        /* ── MAIN ── */
-        .main {
-            margin-left: 240px;
-            min-height: 100vh;
-        }
-
-        .topbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 18px 28px;
-            border-bottom: 1px solid var(--border);
-            background: var(--bg2);
-            position: sticky;
-            top: 0;
-            z-index: 50;
-        }
-
-        .topbar h1 {
-            font-size: 1.15em;
-            font-weight: 700;
-        }
-
-        .topbar-right {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .content {
-            padding: 28px;
-        }
-
-        /* ── PANELS ── */
-        .panel {
-            display: none;
-        }
-
-        .panel.active {
-            display: block;
-        }
-
-        /* Stats */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 16px;
-            margin-bottom: 28px;
-        }
-
-        .stat-card {
-            background: var(--bg2);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 20px;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-
-        .stat-icon {
-            width: 46px;
-            height: 46px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.4em;
-            flex-shrink: 0;
-        }
-
-        .stat-icon.purple {
-            background: rgba(124, 58, 237, .18);
-        }
-
-        .stat-icon.cyan {
-            background: rgba(6, 182, 212, .18);
-        }
-
-        .stat-icon.green {
-            background: rgba(16, 185, 129, .18);
-        }
-
-        .stat-icon.warn {
-            background: rgba(245, 158, 11, .18);
-        }
-
-        .stat-val {
-            font-size: 1.7em;
-            font-weight: 800;
-            line-height: 1;
-        }
-
-        .stat-lbl {
-            font-size: .75em;
-            color: var(--muted);
-            font-weight: 500;
-            margin-top: 3px;
-        }
-
-        /* Section header */
-        .section-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 18px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .section-header h2 {
-            font-size: 1em;
-            font-weight: 700;
-        }
-
-        .search-input {
-            padding: 9px 14px;
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            border-radius: 9px;
-            color: var(--text);
-            font-family: inherit;
-            font-size: .88em;
-            outline: none;
-            width: 220px;
-        }
-
-        .search-input:focus {
-            border-color: var(--accent);
-        }
-
-        /* Table */
-        .card {
-            background: var(--bg2);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            overflow: hidden;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        thead th {
-            padding: 12px 16px;
-            text-align: left;
-            font-size: .76em;
-            font-weight: 600;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: .05em;
-            border-bottom: 1px solid var(--border);
-        }
-
-        tbody td {
-            padding: 13px 16px;
-            font-size: .88em;
-            border-bottom: 1px solid var(--border);
-        }
-
-        tbody tr:last-child td {
-            border-bottom: none;
-        }
-
-        tbody tr:hover {
-            background: rgba(255, 255, 255, .025);
-        }
-
-        .mono {
-            font-family: monospace;
-            font-size: .82em;
-            color: var(--accent2);
-        }
-
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 3px 10px;
-            border-radius: 20px;
-            font-size: .75em;
-            font-weight: 600;
-        }
-
-        .badge-admin {
-            background: rgba(124, 58, 237, .2);
-            color: #a78bfa;
-        }
-
-        .badge-user {
-            background: rgba(100, 116, 139, .2);
-            color: var(--muted);
-        }
-
-        .badge-on {
-            background: rgba(16, 185, 129, .2);
-            color: #34d399;
-        }
-
-        .badge-off {
-            background: rgba(239, 68, 68, .2);
-            color: #f87171;
-        }
-
-        .btn-row {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
-
-        /* Modal */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, .6);
-            z-index: 200;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-overlay.open {
-            display: flex;
-        }
-
-        .modal {
-            background: var(--bg2);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 28px;
-            width: min(460px, 90vw);
-        }
-
-        .modal h3 {
-            font-size: 1.05em;
-            font-weight: 700;
-            margin-bottom: 18px;
-        }
-
-        .modal-footer {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 22px;
-        }
-
-        /* Toast */
-        #toast {
-            position: fixed;
-            bottom: 28px;
-            right: 28px;
-            padding: 12px 20px;
-            border-radius: 10px;
-            font-size: .88em;
-            font-weight: 600;
-            display: none;
-            z-index: 9999;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, .5);
-        }
-
-        #toast.success {
-            background: var(--accent3);
-            color: #fff;
-        }
-
-        #toast.error {
-            background: var(--danger);
-            color: #fff;
-        }
-
-        #toast.info {
-            background: var(--accent);
-            color: #fff;
-        }
-
-        /* Firmawre upload */
-        .upload-zone {
-            border: 2px dashed var(--border);
-            border-radius: 12px;
-            padding: 32px;
-            text-align: center;
-            color: var(--muted);
-            cursor: pointer;
-            transition: border .2s;
-        }
-
-        .upload-zone:hover {
-            border-color: var(--accent);
-        }
-
-        /* Mobile */
-        @media(max-width:700px) {
-            .sidebar {
-                transform: translateX(-100%);
-                z-index: 200;
-                transition: transform .25s;
-            }
-
-            .sidebar.open {
-                transform: translateX(0);
-            }
-
-            .main {
-                margin-left: 0;
-            }
-
-            .mobile-menu-btn {
-                display: block !important;
-            }
-
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        .mobile-menu-btn {
-            display: none;
-            background: none;
-            border: none;
-            color: var(--text);
-            font-size: 1.4em;
-            cursor: pointer;
-        }
-
-        .mobile-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, .5);
-            z-index: 150;
-        }
-
-        .mobile-overlay.open {
-            display: block;
-        }
-    </style>
+    <title>SmartHome Cloud - Admin Panel</title>
+    <meta name="description" content="Admin panel for managing all SmartHome devices">
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-
-    <!-- ═══════════ LOGIN SCREEN ═══════════ -->
-    <div id="loginScreen">
-        <div class="login-card">
-            <div class="big-icon">🛡️</div>
-            <h2 id="authTitle">Welcome Back</h2>
-            <p id="authSub">HomeControl Super Admin Panel</p>
-
-            <div class="tabs">
-                <button id="tabLogin" class="tab-active" onclick="switchTab('login')">🔑 Sign In</button>
-                <button id="tabRegister" class="tab-inactive" onclick="switchTab('register')">✨ Register</button>
-            </div>
-
-            <!-- LOGIN FORM -->
-            <div id="loginForm">
-                <div class="form-group">
-                    <label>Email</label>
-                    <input id="loginEmail" type="email" placeholder="admin@email.com"
-                        onkeydown="if(event.key==='Enter')doLogin()">
-                </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <div class="pw-wrap">
-                        <input id="loginPassword" type="password" placeholder="••••••••"
-                            onkeydown="if(event.key==='Enter')doLogin()">
-                        <button class="pw-toggle" onclick="togglePwd('loginPassword',this)">👁️</button>
-                    </div>
-                </div>
-                <button class="btn btn-primary btn-full" onclick="doLogin()" id="loginBtn">Sign In →</button>
-                <div id="loginErr" class="auth-msg err"></div>
-            </div>
-
-            <!-- REGISTER FORM -->
-            <div id="registerForm" style="display:none">
-                <div class="form-group">
-                    <label>Email</label>
-                    <input id="regEmail" type="email" placeholder="your@email.com">
-                </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <div class="pw-wrap">
-                        <input id="regPassword" type="password" placeholder="Min. 6 characters">
-                        <button class="pw-toggle" onclick="togglePwd('regPassword',this)">👁️</button>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Confirm Password</label>
-                    <input id="regConfirm" type="password" placeholder="Repeat password">
-                </div>
-                <button class="btn btn-cyan btn-full" onclick="doRegister()" id="regBtn">Create Account ✨</button>
-                <div id="regMsg" class="auth-msg"></div>
-                <p style="color:var(--muted);font-size:.76em;margin-top:12px;line-height:1.6;">
-                    ℹ️ You'll receive a welcome email. Admin privileges must be granted by a superuser.
-                </p>
-            </div>
-        </div>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p>Loading admin panel...</p>
     </div>
 
-    <!-- Mobile overlay -->
-    <div class="mobile-overlay" id="mobileOverlay" onclick="closeSidebar()"></div>
+    <div class="dashboard" id="adminPanel" style="display:none;max-width:1100px;">
+        <!-- Header -->
+        <div class="dash-header">
+            <h1>ΓÜí Admin Panel</h1>
+            <div class="nav-links">
+                <a href="dashboard.html" class="nav-link">Dashboard</a>
+                <a href="admin.html" class="nav-link active">Admin</a>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
 
-    <!-- ═══════════ SIDEBAR ═══════════ -->
-    <div class="sidebar" id="sidebar">
-        <div class="logo">
-            <div class="logo-icon">🏠</div>
-            <div>
-                <h2>HomeControl</h2>
-                <span>ADMIN PANEL</span>
+        <!-- Stats -->
+        <div class="stats-bar" id="statsBar">
+            <div class="stat-card">
+                <div class="stat-value" id="totalDevices">0</div>
+                <div class="stat-label">Total Devices</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="onlineDevices">0</div>
+                <div class="stat-label">Online</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="offlineDevices">0</div>
+                <div class="stat-label">Offline</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalUsers">0</div>
+                <div class="stat-label">Users</div>
             </div>
         </div>
-        <nav class="nav">
-            <button class="nav-item active" onclick="showPanel('overview')">
-                <span class="nav-icon">📊</span> Overview
-            </button>
-            <button class="nav-item" onclick="showPanel('devices')">
-                <span class="nav-icon">📡</span> All Devices
-            </button>
-            <button class="nav-item" onclick="showPanel('users')">
-                <span class="nav-icon">👥</span> Users
-            </button>
-            <button class="nav-item" onclick="showPanel('firmware')">
-                <span class="nav-icon">⚡</span> Firmware OTA
-            </button>
-            <hr style="border-color:var(--border);margin:8px 4px;">
-            <a href="dashboard.html" class="nav-item" style="text-decoration:none;">
-                <span class="nav-icon">🏠</span> User Dashboard
-            </a>
-        </nav>
-        <div class="sidebar-footer">
-            <div class="admin-badge">
-                <div class="av">SA</div>
-                <div class="info">
-                    <div class="name" id="adminEmail">Admin</div>
-                    <div class="role">SUPERUSER</div>
-                </div>
-                <button onclick="logout()" title="Logout"
-                    style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1em;padding:4px;">↩</button>
+
+        <!-- Make me admin button (first time setup) -->
+        <div id="makeAdminSection" style="display:none;margin-bottom:20px;">
+            <div
+                style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:14px;padding:18px;text-align:center;">
+                <p style="color:var(--accent-orange);margin-bottom:10px;font-weight:600;">ΓÜá∩╕Å No admin set up yet</p>
+                <p style="color:var(--text-muted);font-size:0.85em;margin-bottom:14px;">Click below to make yourself the
+                    admin (first time only)</p>
+                <button class="btn btn-primary" onclick="makeAdmin()" style="max-width:250px;margin:0 auto;">≡ƒææ Make Me
+                    Admin</button>
             </div>
         </div>
+
+        <!-- Access denied -->
+        <div id="accessDenied" style="display:none;text-align:center;padding:60px 20px;">
+            <p style="font-size:3em;margin-bottom:10px;">≡ƒöÆ</p>
+            <h2 style="color:var(--accent-red);margin-bottom:10px;">Access Denied</h2>
+            <p style="color:var(--text-muted);">You are not an admin. Contact the system administrator.</p>
+            <a href="dashboard.html" class="btn btn-primary"
+                style="max-width:200px;display:inline-block;margin-top:20px;text-decoration:none;text-align:center;">ΓåÉ
+                Back to Dashboard</a>
+        </div>
+
+        <!-- All Devices -->
+        <h2 style="margin-bottom:16px;font-size:1.3em;display:none;" id="devicesTitle">≡ƒô▒ All Registered Devices</h2>
+        <div class="admin-grid" id="devicesGrid"></div>
     </div>
 
-    <!-- ═══════════ MAIN CONTENT ═══════════ -->
-    <div class="main" id="mainContent" style="display:none">
-        <div class="topbar">
-            <div style="display:flex;align-items:center;gap:12px;">
-                <button class="mobile-menu-btn" onclick="openSidebar()">☰</button>
-                <h1 id="panelTitle">📊 Overview</h1>
-            </div>
-            <div class="topbar-right">
-                <span style="font-size:.78em;color:var(--muted);" id="lastRefresh"></span>
-                <button class="btn btn-ghost btn-sm" onclick="refreshAll()">↺ Refresh</button>
-                <button class="btn btn-danger btn-sm" onclick="logout()">Sign Out</button>
-            </div>
-        </div>
-
-        <div class="content">
-            <div id="toast"></div>
-
-            <!-- ════ OVERVIEW ════ -->
-            <div class="panel active" id="panel-overview">
-                <div class="stats-grid" id="statsGrid">
-                    <div class="stat-card">
-                        <div class="stat-icon purple">👥</div>
-                        <div>
-                            <div class="stat-val" id="statUsers">—</div>
-                            <div class="stat-lbl">Total Users</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon cyan">📡</div>
-                        <div>
-                            <div class="stat-val" id="statDevices">—</div>
-                            <div class="stat-lbl">Total Devices</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon green">🟢</div>
-                        <div>
-                            <div class="stat-val" id="statOnline">—</div>
-                            <div class="stat-lbl">Online Now</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon warn">⭐</div>
-                        <div>
-                            <div class="stat-val" id="statAdmins">—</div>
-                            <div class="stat-lbl">Admins</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="card">
-                    <div
-                        style="padding:16px 18px;border-bottom:1px solid var(--border);font-weight:600;font-size:.9em;">
-                        Recent Devices</div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Device ID</th>
-                                <th>Name</th>
-                                <th>Type</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="recentDevices">
-                            <tr>
-                                <td colspan="4" style="text-align:center;color:var(--muted);padding:24px;">Loading...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- ════ DEVICES ════ -->
-            <div class="panel" id="panel-devices">
-                <div class="section-header">
-                    <h2>All Devices</h2>
-                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                        <input class="search-input" id="deviceSearch" placeholder="🔍 Search devices..."
-                            oninput="filterDevices()">
-                        <button class="btn btn-primary btn-sm" onclick="openModal('addDeviceModal')">+ Add
-                            Device</button>
-                    </div>
-                </div>
-                <div class="card">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Name</th>
-                                <th>Type</th>
-                                <th>Owner</th>
-                                <th>IP</th>
-                                <th>Status</th>
-                                <th>Relays</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="devicesTable">
-                            <tr>
-                                <td colspan="8" style="text-align:center;color:var(--muted);padding:24px;">Loading...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- ════ USERS ════ -->
-            <div class="panel" id="panel-users">
-                <div class="section-header">
-                    <h2>All Users</h2>
-                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                        <input class="search-input" id="userSearch" placeholder="🔍 Search users..."
-                            oninput="filterUsers()">
-                        <button class="btn btn-primary btn-sm" onclick="openModal('addUserModal')">+ Add User</button>
-                    </div>
-                </div>
-                <div class="card">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Email</th>
-                                <th>Role</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="usersTable">
-                            <tr>
-                                <td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">Loading...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- ════ FIRMWARE ════ -->
-            <div class="panel" id="panel-firmware">
-                <div class="section-header">
-                    <h2>Firmware OTA</h2>
-                </div>
-                <div class="card" style="padding:24px;margin-bottom:20px;">
-                    <h3 style="font-size:.95em;margin-bottom:18px;">Upload New Firmware</h3>
-                    <form id="uploadForm" onsubmit="uploadFirmware(event)">
-                        <div class="form-group"><label>Version (e.g. 1.2.0)</label><input id="fwVersion"
-                                placeholder="1.0.0"></div>
-                        <div class="form-group"><label>Description</label><input id="fwDesc"
-                                placeholder="What changed?"></div>
-                        <div class="upload-zone" onclick="document.getElementById('fwFile').click()">
-                            <div style="font-size:2em;margin-bottom:8px;">📁</div>
-                            <div id="fwFileName">Click to select .bin file</div>
-                            <input type="file" id="fwFile" accept=".bin" style="display:none"
-                                onchange="document.getElementById('fwFileName').textContent=this.files[0]?.name||'No file'">
-                        </div>
-                        <button class="btn btn-primary" style="margin-top:16px;" type="submit">⬆ Upload
-                            Firmware</button>
-                    </form>
-                </div>
-                <div class="card">
-                    <div
-                        style="padding:16px 18px;border-bottom:1px solid var(--border);font-weight:600;font-size:.9em;">
-                        Firmware History</div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Version</th>
-                                <th>Description</th>
-                                <th>Uploaded</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="firmwareTable">
-                            <tr>
-                                <td colspan="4" style="text-align:center;color:var(--muted);padding:24px;">Loading...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ═══ MODALS ═══ -->
-
-    <!-- Rename Device -->
-    <div class="modal-overlay" id="renameModal">
-        <div class="modal">
-            <h3>✏️ Rename Device</h3>
-            <input type="hidden" id="renameDeviceId">
-            <div class="form-group"><label>New Name</label><input id="renameDeviceName" placeholder="Device name"></div>
-            <div class="modal-footer">
-                <button class="btn btn-ghost" onclick="closeModal('renameModal')">Cancel</button>
-                <button class="btn btn-primary" onclick="submitRename()">Save</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add Device -->
-    <div class="modal-overlay" id="addDeviceModal">
-        <div class="modal">
-            <h3>📡 Add Device</h3>
-            <div class="form-group"><label>Device ID</label><input id="newDevId" placeholder="SH-001"></div>
-            <div class="form-group"><label>Name</label><input id="newDevName" placeholder="Living Room Hub"></div>
-            <div class="form-group"><label>Type</label>
-                <select id="newDevType"
-                    style="width:100%;padding:11px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:.95em;outline:none;">
-                    <option value="relay_board">Relay Board</option>
-                    <option value="sensor">Sensor</option>
-                    <option value="camera">Camera</option>
-                </select>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-ghost" onclick="closeModal('addDeviceModal')">Cancel</button>
-                <button class="btn btn-primary" onclick="submitAddDevice()">Register</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add User -->
-    <div class="modal-overlay" id="addUserModal">
-        <div class="modal">
-            <h3>👤 Add User</h3>
-            <div class="form-group"><label>Email</label><input id="newUserEmail" type="email"
-                    placeholder="user@email.com"></div>
-            <div class="form-group"><label>Password</label><input id="newUserPass" type="password"
-                    placeholder="min. 6 chars"></div>
-            <div class="form-group" style="display:flex;align-items:center;gap:10px;">
-                <input type="checkbox" id="newUserAdmin" style="width:16px;height:16px;">
-                <label for="newUserAdmin"
-                    style="font-size:.88em;color:var(--text);text-transform:none;letter-spacing:0;">Make Superuser
-                    (Admin)</label>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-ghost" onclick="closeModal('addUserModal')">Cancel</button>
-                <button class="btn btn-primary" onclick="submitAddUser()">Create</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Confirm -->
-    <div class="modal-overlay" id="confirmModal">
-        <div class="modal">
-            <h3 id="confirmTitle">Confirm</h3>
-            <p id="confirmMsg" style="color:var(--muted);font-size:.9em;margin:12px 0;"></p>
-            <div class="modal-footer">
-                <button class="btn btn-ghost" onclick="closeModal('confirmModal')">Cancel</button>
-                <button class="btn btn-danger" id="confirmBtn">Confirm</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="config.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="app.js"></script>
     <script>
-        // ═══════════════════════════════════════════
-        // STATE
-        // ═══════════════════════════════════════════
-        let TOKEN = '';
-        let ME = null;
-        let allDevices = [];
-        let allUsers = [];
+        let currentUid = null;
 
-        // ═══════════════════════════════════════════
-        // AUTH TAB
-        // ═══════════════════════════════════════════
-        function switchTab(tab) {
-            const isLogin = tab === 'login';
-            document.getElementById('loginForm').style.display = isLogin ? 'block' : 'none';
-            document.getElementById('registerForm').style.display = isLogin ? 'none' : 'block';
-            document.getElementById('authTitle').textContent = isLogin ? 'Welcome Back' : 'Create Account';
-            document.getElementById('authSub').textContent = isLogin ? 'HomeControl Super Admin Panel' : 'Join HomeControl';
-            document.getElementById('tabLogin').className = isLogin ? 'tab-active' : 'tab-inactive';
-            document.getElementById('tabRegister').className = isLogin ? 'tab-inactive' : 'tab-active';
-            document.getElementById('tabLogin').style.background = isLogin ? 'var(--accent)' : 'transparent';
-            document.getElementById('tabRegister').style.background = isLogin ? 'transparent' : 'var(--accent2)';
-            document.getElementById('loginErr').style.display = 'none';
-            document.getElementById('regMsg').style.display = 'none';
-        }
+        requireAuth(async (user) => {
+            currentUid = user.uid;
 
-        // ═══════════════════════════════════════════
-        // LOGIN
-        // ═══════════════════════════════════════════
-        async function doLogin() {
-            const email = document.getElementById('loginEmail').value.trim();
-            const pass = document.getElementById('loginPassword').value;
-            const errEl = document.getElementById('loginErr');
-            const btn = document.getElementById('loginBtn');
+            // Check if any admin exists
+            const adminsSnap = await db.ref('admins').once('value');
+            const adminsExist = adminsSnap.exists();
 
-            errEl.style.display = 'none';
-            if (!email || !pass) { errEl.textContent = '❌ Fill in both fields.'; errEl.style.display = 'block'; return; }
-
-            btn.textContent = '⏳ Signing in...';
-            btn.disabled = true;
-
-            try {
-                const form = new FormData();
-                form.append('username', email);
-                form.append('password', pass);
-
-                const tokenRes = await fetch(`${API_URL}/login/access-token`, { method: 'POST', body: form });
-                if (!tokenRes.ok) {
-                    const e = await tokenRes.json();
-                    throw new Error(e.detail || `Error ${tokenRes.status}`);
-                }
-                const tokenData = await tokenRes.json();
-                TOKEN = tokenData.access_token;
-
-                const meRes = await fetch(`${API_URL}/users/me`, { headers: { 'Authorization': `Bearer ${TOKEN}` } });
-                if (!meRes.ok) throw new Error('Could not fetch user profile');
-                ME = await meRes.json();
-
-                if (!ME.is_superuser) {
-                    throw new Error('This account does not have admin privileges. Contact a superuser.');
-                }
-
-                // ✅ Admin — enter panel
-                localStorage.setItem('admin_token', TOKEN);
-                enterPanel();
-
-            } catch (e) {
-                errEl.textContent = '❌ ' + e.message;
-                errEl.style.display = 'block';
-            } finally {
-                btn.textContent = 'Sign In →';
-                btn.disabled = false;
-            }
-        }
-
-        // ═══════════════════════════════════════════
-        // REGISTER
-        // ═══════════════════════════════════════════
-        async function doRegister() {
-            const email = document.getElementById('regEmail').value.trim();
-            const password = document.getElementById('regPassword').value;
-            const confirm = document.getElementById('regConfirm').value;
-            const msgEl = document.getElementById('regMsg');
-            const btn = document.getElementById('regBtn');
-
-            msgEl.style.display = 'none';
-            msgEl.className = 'auth-msg';
-
-            if (!email || !password) {
-                msgEl.textContent = '❌ Please fill in all fields.';
-                msgEl.classList.add('err'); msgEl.style.display = 'block'; return;
-            }
-            if (password.length < 6) {
-                msgEl.textContent = '❌ Password must be at least 6 characters.';
-                msgEl.classList.add('err'); msgEl.style.display = 'block'; return;
-            }
-            if (password !== confirm) {
-                msgEl.textContent = '❌ Passwords do not match!';
-                msgEl.classList.add('err'); msgEl.style.display = 'block'; return;
+            if (!adminsExist) {
+                // No admin yet ΓÇö show "make me admin" button
+                document.getElementById('makeAdminSection').style.display = 'block';
+                document.getElementById('loadingOverlay').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+                return;
             }
 
-            btn.textContent = '⏳ Creating...';
-            btn.disabled = true;
-
-            try {
-                const res = await fetch(`${API_URL}/users/`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password, is_superuser: false, is_active: true })
-                });
-                if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Registration failed'); }
-
-                msgEl.textContent = '✅ Account created! Check your email. Switching to login...';
-                msgEl.classList.add('ok');
-                msgEl.style.display = 'block';
-
-                setTimeout(() => {
-                    switchTab('login');
-                    document.getElementById('loginEmail').value = email;
-                    document.getElementById('loginPassword').focus();
-                }, 2000);
-
-            } catch (e) {
-                msgEl.textContent = '❌ ' + e.message;
-                msgEl.classList.add('err');
-                msgEl.style.display = 'block';
-            } finally {
-                btn.textContent = 'Create Account ✨';
-                btn.disabled = false;
+            // Check if current user is admin
+            const isAdminUser = await isAdmin(user.uid);
+            if (!isAdminUser) {
+                document.getElementById('accessDenied').style.display = 'block';
+                document.getElementById('loadingOverlay').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+                return;
             }
-        }
 
-        // ═══════════════════════════════════════════
-        // ENTER PANEL
-        // ═══════════════════════════════════════════
-        function enterPanel() {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('mainContent').style.display = 'block';
-            document.getElementById('adminEmail').textContent = ME.email;
-            refreshAll();
-        }
-
-        function logout() {
-            localStorage.removeItem('admin_token');
-            TOKEN = ''; ME = null;
-            document.getElementById('loginScreen').style.display = 'flex';
-            document.getElementById('mainContent').style.display = 'none';
-        }
-
-        // Auto-login if token stored
-        window.addEventListener('DOMContentLoaded', async () => {
-            const saved = localStorage.getItem('admin_token');
-            if (saved) {
-                try {
-                    const r = await fetch(`${API_URL}/users/me`, { headers: { 'Authorization': `Bearer ${saved}` } });
-                    if (r.ok) {
-                        const u = await r.json();
-                        if (u.is_superuser) { TOKEN = saved; ME = u; enterPanel(); return; }
-                    }
-                } catch { }
-                localStorage.removeItem('admin_token');
-            }
+            // Load admin dashboard
+            loadAdminData();
         });
 
-        // ═══════════════════════════════════════════
-        // NAV
-        // ═══════════════════════════════════════════
-        const panelTitles = { overview: '📊 Overview', devices: '📡 All Devices', users: '👥 Users', firmware: '⚡ Firmware OTA' };
-        function showPanel(name) {
-            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById('panel-' + name).classList.add('active');
-            document.getElementById('panelTitle').textContent = panelTitles[name];
+        async function makeAdmin() {
+            await db.ref('admins/' + currentUid).set(true);
+            location.reload();
+        }
 
-            // mark nav item active (match by text)
-            document.querySelectorAll('.nav-item').forEach(n => {
-                if (n.textContent.toLowerCase().includes(name)) n.classList.add('active');
+        function loadAdminData() {
+            document.getElementById('devicesTitle').style.display = 'block';
+
+            // Real-time listener for all devices
+            db.ref('devices').on('value', (snapshot) => {
+                const devices = snapshot.val() || {};
+                const deviceIds = Object.keys(devices);
+
+                let online = 0, offline = 0;
+                deviceIds.forEach(id => {
+                    if (devices[id].online) online++;
+                    else offline++;
+                });
+
+                document.getElementById('totalDevices').textContent = deviceIds.length;
+                document.getElementById('onlineDevices').textContent = online;
+                document.getElementById('offlineDevices').textContent = offline;
+
+                // Render device cards
+                const grid = document.getElementById('devicesGrid');
+                let html = '';
+
+                deviceIds.forEach(id => {
+                    const device = devices[id];
+                    const relays = device.relays || {};
+                    const isOnline = device.online === true;
+                    const lastSeen = device.lastSeen ? getTimeAgo(device.lastSeen) : 'Never';
+
+                    html += `
+                    <div class="device-card">
+                        <div class="device-card-header">
+                            <div>
+                                <div class="device-card-id">${id}</div>
+                                <div style="font-size:0.8em;color:var(--text-muted);">${device.ownerName || 'Unknown'}</div>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:6px;">
+                                <div class="status-dot ${isOnline ? 'online' : 'offline'}"></div>
+                                <span style="font-size:0.8em;color:${isOnline ? 'var(--accent-green)' : 'var(--accent-red)'};">
+                                    ${isOnline ? 'Online' : 'Offline'}
+                                </span>
+                            </div>
+                        </div>
+                        <div style="font-size:0.75em;color:var(--text-muted);margin-bottom:12px;">Last: ${lastSeen}</div>
+                        <div class="device-card-relays">`;
+
+                    Object.keys(relays).sort().forEach(key => {
+                        const relay = relays[key];
+                        const isOn = relay.state === true;
+                        html += `
+                            <div class="mini-relay" style="cursor:pointer;" onclick="toggleRelay('${id}', '${key}', ${isOn})">
+                                <span>${relay.name || key}</span>
+                                <span class="mini-relay-status ${isOn ? 'on' : 'off'}">${isOn ? 'ON' : 'OFF'}</span>
+                            </div>`;
+                    });
+
+                    html += `</div></div>`;
+                });
+
+                grid.innerHTML = html || '<p style="color:var(--text-muted);text-align:center;grid-column:1/-1;">No devices registered yet.</p>';
+
+                document.getElementById('loadingOverlay').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
             });
 
-            if (name === 'devices') loadDevices();
-            if (name === 'users') loadUsers();
-            if (name === 'firmware') loadFirmware();
-            if (name === 'overview') loadOverview();
-            closeSidebar();
+            // Count users
+            db.ref('users').on('value', (snapshot) => {
+                const users = snapshot.val() || {};
+                document.getElementById('totalUsers').textContent = Object.keys(users).length;
+            });
         }
 
-        function openSidebar() {
-            document.getElementById('sidebar').classList.add('open');
-            document.getElementById('mobileOverlay').classList.add('open');
+        function getTimeAgo(timestamp) {
+            const seconds = Math.floor((Date.now() - timestamp) / 1000);
+            if (seconds < 60) return 'Just now';
+            if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
+            if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
+            return Math.floor(seconds / 86400) + 'd ago';
         }
-        function closeSidebar() {
-            document.getElementById('sidebar').classList.remove('open');
-            document.getElementById('mobileOverlay').classList.remove('open');
-        }
-
-        async function refreshAll() {
-            const n = document.getElementById('lastRefresh');
-            if (n) n.textContent = 'Refreshing...';
-            await Promise.all([loadOverview(), loadDevices(), loadUsers(), loadFirmware()]);
-            if (n) n.textContent = 'Updated ' + new Date().toLocaleTimeString();
-        }
-
-        // ═══════════════════════════════════════════
-        // OVERVIEW
-        // ═══════════════════════════════════════════
-        async function safeJson(url, headers) {
-            try {
-                const r = await fetch(url, { headers });
-                if (!r.ok) return null;
-                return await r.json();
-            } catch (e) {
-                console.warn('Fetch failed:', url, e.message);
-                return null;
-            }
-        }
-
-        async function loadOverview() {
-            // Reset recent devices to loading immediately
-            document.getElementById('recentDevices').innerHTML =
-                '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px;">Loading...</td></tr>';
-
-            // Fetch users and devices INDEPENDENTLY — one failure never blocks the other
-            const [users, devices] = await Promise.all([
-                safeJson(`${API_URL}/users/`, authH()),
-                safeJson(`${API_URL}/devices/admin/all`, authH()),
-            ]);
-
-            // ── Stat cards ──
-            document.getElementById('statUsers').textContent = users ? users.length : '?';
-            document.getElementById('statDevices').textContent = devices ? devices.length : '?';
-            document.getElementById('statOnline').textContent = devices ? devices.filter(d => d.online).length : '?';
-            document.getElementById('statAdmins').textContent = users ? users.filter(u => u.is_superuser).length : '?';
-
-            // ── Recent Devices table ──
-            if (!devices) {
-                document.getElementById('recentDevices').innerHTML =
-                    '<tr><td colspan="4" style="text-align:center;color:var(--danger);padding:20px;">⚠️ Could not load devices — backend may be waking up, try Refresh</td></tr>';
-                return;
-            }
-            const recent = devices.slice(0, 6);
-            document.getElementById('recentDevices').innerHTML = recent.length ? recent.map(d => `
-                <tr>
-                    <td class="mono">${d.id}</td>
-                    <td>${d.name || '—'}</td>
-                    <td>${d.type || '—'}</td>
-                    <td><span class="badge ${d.online ? 'badge-on' : 'badge-off'}">${d.online ? '🟢 Online' : '⚫ Offline'}</span></td>
-                </tr>`).join('') :
-                '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px;">No devices registered yet</td></tr>';
-        }
-
-        // ═══════════════════════════════════════════
-        // DEVICES
-        // ═══════════════════════════════════════════
-        async function loadDevices() {
-            document.getElementById('devicesTable').innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px;">Loading...</td></tr>';
-            const data = await safeJson(`${API_URL}/devices/admin/all`, authH());
-            if (!data) {
-                document.getElementById('devicesTable').innerHTML =
-                    '<tr><td colspan="8" style="text-align:center;color:var(--danger);padding:24px;">⚠️ Could not load devices. Backend may be waking up — wait 30s and click Refresh.</td></tr>';
-                return;
-            }
-            allDevices = data;
-            renderDevices(allDevices);
-        }
-
-        function renderDevices(list) {
-            document.getElementById('devicesTable').innerHTML = list.length ? list.map(d => `
-            <tr>
-                <td class="mono" style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${d.id}">${d.id}</td>
-                <td>${d.name || '—'}</td>
-                <td>${d.type || '—'}</td>
-                <td class="mono" style="font-size:.75em;">${d.owner_id || '—'}</td>
-                <td class="mono" style="font-size:.78em;">${d.ip_address || '—'}</td>
-                <td><span class="badge ${d.online ? 'badge-on' : 'badge-off'}">${d.online ? '🟢 Online' : '⚫ Offline'}</span></td>
-                <td>${buildRelayBtns(d)}</td>
-                <td>
-                    <div class="btn-row">
-                        <button class="btn btn-ghost btn-sm" onclick="openRename('${esc(d.id)}','${esc(d.name || '')}')">✏️</button>
-                        <button class="btn btn-danger btn-sm" onclick="confirmDeleteDevice('${esc(d.id)}','${esc(d.name || d.id)}')">🗑️</button>
-                    </div>
-                </td>
-            </tr>`).join('') : '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px;">No devices found</td></tr>';
-        }
-
-        function buildRelayBtns(d) {
-            const relays = (d.start_state && typeof d.start_state === 'object') ? Object.keys(d.start_state) : [];
-            if (!relays.length) return '<span style="color:var(--muted);font-size:.8em;">—</span>';
-            return relays.map(key => {
-                const isOn = d.start_state[key]?.state === true;
-                return `<button class="btn btn-sm ${isOn ? 'btn-primary' : 'btn-ghost'}" style="padding:4px 8px;font-size:.74em;"
-                onclick="toggleRelay('${esc(d.id)}','${key}',${isOn},'${esc(d.api_key || '')}')">
-                ${key.replace('relay', 'R')} ${isOn ? 'ON' : 'OFF'}</button>`;
-            }).join(' ');
-        }
-
-        function filterDevices() {
-            const q = document.getElementById('deviceSearch').value.toLowerCase();
-            renderDevices(allDevices.filter(d => (d.id + d.name + d.type + d.ip_address).toLowerCase().includes(q)));
-        }
-
-        function openRename(id, name) {
-            document.getElementById('renameDeviceId').value = id;
-            document.getElementById('renameDeviceName').value = name;
-            openModal('renameModal');
-            setTimeout(() => document.getElementById('renameDeviceName').focus(), 50);
-        }
-
-        async function submitRename() {
-            const id = document.getElementById('renameDeviceId').value;
-            const name = document.getElementById('renameDeviceName').value.trim();
-            if (!name) return;
-            try {
-                const r = await fetch(`${API_URL}/devices/admin/${id}/rename`, {
-                    method: 'PUT', headers: { ...authH(), 'Content-Type': 'application/json' }, body: JSON.stringify({ name })
-                });
-                if (!r.ok) throw new Error();
-                closeModal('renameModal');
-                toast('Device renamed!', 'success');
-                loadDevices();
-            } catch { toast('Rename failed', 'error'); }
-        }
-
-        function confirmDeleteDevice(id, name) {
-            document.getElementById('confirmTitle').textContent = 'Delete Device?';
-            document.getElementById('confirmMsg').textContent = `Delete "${name}" (${id})? This cannot be undone.`;
-            document.getElementById('confirmBtn').onclick = () => deleteDevice(id);
-            openModal('confirmModal');
-        }
-
-        async function deleteDevice(id) {
-            try {
-                const r = await fetch(`${API_URL}/devices/admin/${id}`, { method: 'DELETE', headers: authH() });
-                if (!r.ok) throw new Error();
-                closeModal('confirmModal');
-                toast('Device deleted', 'success');
-                loadDevices();
-            } catch { toast('Delete failed', 'error'); }
-        }
-
-        async function toggleRelay(deviceId, key, currentOn, apiKey) {
-            const action = currentOn ? 'off' : 'on';
-            try {
-                const r = await fetch(`${API_URL}/devices/${deviceId}/relays/${key}/${action}`, {
-                    method: 'POST', headers: { ...authH(), 'X-API-Key': apiKey }
-                });
-                if (!r.ok) throw new Error();
-                toast(`${key} turned ${action.toUpperCase()}!`, 'success');
-                await loadDevices();
-            } catch { toast('Relay toggle failed', 'error'); }
-        }
-
-        async function submitAddDevice() {
-            const id = document.getElementById('newDevId').value.trim();
-            const name = document.getElementById('newDevName').value.trim();
-            const type = document.getElementById('newDevType').value;
-            if (!id || !name) return toast('Fill all fields', 'error');
-            try {
-                const r = await fetch(`${API_URL}/devices/`, {
-                    method: 'POST', headers: { ...authH(), 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id, name, type })
-                });
-                if (!r.ok) { const e = await r.json(); throw new Error(e.detail); }
-                closeModal('addDeviceModal');
-                toast('Device registered!', 'success');
-                loadDevices();
-            } catch (e) { toast('Error: ' + (e.message || 'unknown'), 'error'); }
-        }
-
-        // ═══════════════════════════════════════════
-        // USERS
-        // ═══════════════════════════════════════════
-        async function loadUsers() {
-            document.getElementById('usersTable').innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">Loading...</td></tr>';
-            try {
-                const r = await fetch(`${API_URL}/users/`, { headers: authH() });
-                if (!r.ok) throw new Error(`HTTP ${r.status}`);
-                allUsers = await r.json();
-                renderUsers(allUsers);
-            } catch (e) {
-                document.getElementById('usersTable').innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--danger);padding:24px;">Error: ${e.message}</td></tr>`;
-            }
-        }
-
-        function renderUsers(list) {
-            document.getElementById('usersTable').innerHTML = list.length ? list.map(u => `
-            <tr>
-                <td>${u.id}</td>
-                <td>${u.email}</td>
-                <td><span class="badge ${u.is_superuser ? 'badge-admin' : 'badge-user'}">${u.is_superuser ? '⭐ Admin' : '👤 User'}</span></td>
-                <td><span class="badge ${u.is_active ? 'badge-on' : 'badge-off'}">${u.is_active ? 'Active' : 'Inactive'}</span></td>
-                <td>
-                    <div class="btn-row">
-                        ${!u.is_superuser ? `<button class="btn btn-ghost btn-sm" onclick="promoteUser(${u.id},'${esc(u.email)}')">⭐ Promote</button>` : ''}
-                        ${u.id !== ME?.id ? `<button class="btn btn-danger btn-sm" onclick="confirmDeleteUser(${u.id},'${esc(u.email)}',${u.is_superuser})">🗑️</button>` : ''}
-                    </div>
-                </td>
-            </tr>`).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">No users</td></tr>';
-        }
-
-        function filterUsers() {
-            const q = document.getElementById('userSearch').value.toLowerCase();
-            renderUsers(allUsers.filter(u => (u.email + u.id).toLowerCase().includes(q)));
-        }
-
-        async function promoteUser(id, email) {
-            if (!confirm(`Promote ${email} to Superuser? They will receive an email notification.`)) return;
-            try {
-                const r = await fetch(`${API_URL}/users/${id}/promote`, { method: 'PUT', headers: authH() });
-                if (!r.ok) { const e = await r.json(); throw new Error(e.detail); }
-                toast(`${email} is now an admin! Email sent.`, 'success');
-                loadUsers();
-            } catch (e) { toast('Promote failed: ' + (e.message || 'error'), 'error'); }
-        }
-
-        function confirmDeleteUser(id, email, isSuperuser) {
-            if (isSuperuser) { toast('Cannot delete a superuser', 'error'); return; }
-            document.getElementById('confirmTitle').textContent = 'Delete User?';
-            document.getElementById('confirmMsg').textContent = `Delete user "${email}"? All their devices will remain.`;
-            document.getElementById('confirmBtn').onclick = () => deleteUser(id);
-            openModal('confirmModal');
-        }
-
-        async function deleteUser(id) {
-            try {
-                const r = await fetch(`${API_URL}/users/${id}`, { method: 'DELETE', headers: authH() });
-                if (!r.ok) throw new Error();
-                closeModal('confirmModal');
-                toast('User deleted', 'success');
-                loadUsers();
-            } catch { toast('Delete failed', 'error'); }
-        }
-
-        async function submitAddUser() {
-            const email = document.getElementById('newUserEmail').value.trim();
-            const pass = document.getElementById('newUserPass').value;
-            const isAdmin = document.getElementById('newUserAdmin').checked;
-            if (!email || !pass) return toast('Fill all fields', 'error');
-            try {
-                const r = await fetch(`${API_URL}/users/`, {
-                    method: 'POST', headers: { ...authH(), 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password: pass, is_superuser: isAdmin, is_active: true })
-                });
-                if (!r.ok) { const e = await r.json(); throw new Error(e.detail); }
-                closeModal('addUserModal');
-                toast('User created! Welcome email sent.', 'success');
-                loadUsers();
-            } catch (e) { toast('Error: ' + (e.message || 'unknown'), 'error'); }
-        }
-
-        // ═══════════════════════════════════════════
-        // FIRMWARE
-        // ═══════════════════════════════════════════
-        async function loadFirmware() {
-            try {
-                const r = await fetch(`${API_URL}/firmware/`, { headers: authH() });
-                if (!r.ok) throw new Error();
-                const list = await r.json();
-                document.getElementById('firmwareTable').innerHTML = list.length ? list.map(f => `
-                <tr>
-                    <td><span class="badge badge-admin">${f.version}</span></td>
-                    <td>${f.description || '—'}</td>
-                    <td>${f.created_at ? new Date(f.created_at).toLocaleString() : '—'}</td>
-                    <td><a href="${API_URL}/firmware/${f.id}/download" class="btn btn-ghost btn-sm" target="_blank">⬇ Download</a></td>
-                </tr>`).join('') :
-                    '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px;">No firmware uploaded yet</td></tr>';
-            } catch {
-                document.getElementById('firmwareTable').innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px;">Firmware endpoint not available</td></tr>';
-            }
-        }
-
-        async function uploadFirmware(e) {
-            e.preventDefault();
-            const ver = document.getElementById('fwVersion').value.trim();
-            const desc = document.getElementById('fwDesc').value.trim();
-            const file = document.getElementById('fwFile').files[0];
-            if (!file) return toast('Select a .bin file', 'error');
-            const fd = new FormData();
-            fd.append('file', file);
-            try {
-                const r = await fetch(`${API_URL}/firmware/upload?version=${encodeURIComponent(ver)}&description=${encodeURIComponent(desc)}`, {
-                    method: 'POST', headers: authH(), body: fd
-                });
-                if (!r.ok) throw new Error();
-                toast('Firmware uploaded!', 'success');
-                e.target.reset();
-                document.getElementById('fwFileName').textContent = 'Click to select .bin file';
-                loadFirmware();
-            } catch { toast('Upload failed', 'error'); }
-        }
-
-        // ═══════════════════════════════════════════
-        // UTILS
-        // ═══════════════════════════════════════════
-        function authH() { return { 'Authorization': `Bearer ${TOKEN}` }; }
-        function openModal(id) { document.getElementById(id).classList.add('open'); }
-        function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-        function esc(s) { return String(s).replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
-
-        function toast(msg, type = 'success') {
-            const el = document.getElementById('toast');
-            el.textContent = (type === 'success' ? '✅ ' : type === 'error' ? '❌ ' : 'ℹ️ ') + msg;
-            el.className = type;
-            el.style.display = 'block';
-            setTimeout(() => el.style.display = 'none', 3500);
-        }
-
-        function togglePwd(inputId, btn) {
-            const inp = document.getElementById(inputId);
-            if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
-            else { inp.type = 'password'; btn.textContent = '👁️'; }
-        }
-
-        // Close modals on outside click
-        document.querySelectorAll('.modal-overlay').forEach(el => {
-            el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
-        });
     </script>
 </body>
 

@@ -1,31 +1,15 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="manifest" href="manifest.json">
     <title>SmartHome Cloud - Dashboard</title>
     <meta name="description" content="Control your ESP32 Smart Home switches from anywhere">
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        // Restore theme BEFORE page renders to avoid flash
-        const savedTheme = localStorage.getItem('theme') || 'dark';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-    </script>
 </head>
 
 <body>
-    <!-- Animated Background Orbs -->
-    <div class="bg-orbs" aria-hidden="true">
-        <div class="orb orb-1"></div>
-        <div class="orb orb-2"></div>
-        <div class="orb orb-3"></div>
-        <div class="orb orb-4"></div>
-        <div class="orb orb-5"></div>
-    </div>
-
     <!-- Loading overlay -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="spinner"></div>
@@ -36,164 +20,41 @@
         <!-- Header -->
         <div class="dash-header">
             <div>
-                <h1>SmartHome</h1>
-                <p style="color:var(--text-secondary); font-size:0.9rem;">Welcome, <span id="userName">User</span></p>
+                <h1>≡ƒÅá SmartHome</h1>
             </div>
             <div class="nav-links">
-                <button class="theme-toggle-btn" id="themeToggle" onclick="toggleTheme()"
-                    title="Toggle theme">🌙</button>
-                <button class="logout-btn" onclick="logout()">Sign Out</button>
+                <a href="dashboard.html" class="nav-link active">Dashboard</a>
+                <!-- Admin link removed for now until implemented in backend -->
+                <button class="logout-btn" onclick="logout()">Logout</button>
             </div>
         </div>
 
-        <!-- Device Status Banner -->
+        <!-- User info -->
+        <div class="user-badge" style="margin-bottom:16px;">
+            <span>≡ƒæñ <span id="userName">User</span></span>
+            <span style="color:var(--text-muted);">|</span>
+            <span>≡ƒô▒ Device: <strong id="userDeviceId">ΓÇö</strong></span>
+        </div>
+
+        <!-- Device status -->
         <div class="device-status">
             <div class="status-dot" id="statusDot"></div>
-            <div>
-                <span id="statusText" style="font-weight:600; display:block;">Connecting...</span>
-                <span style="font-size:0.8rem; color:var(--text-muted); display:block;">ID: <span
-                        id="userDeviceId">--</span></span>
-            </div>
+            <span id="statusText" style="font-weight:600;">Connecting...</span>
+            <span class="device-id-label" id="lastSeenLabel" style="margin-left:auto;"></span>
         </div>
 
-        <!-- Sensor Card -->
-        <div class="sensor-card">
-            <div class="sensor-item">
-                <span class="sensor-icon">🌡️</span>
-                <span class="sensor-label">Temp</span>
-                <div class="sensor-data">
-                    <span class="sensor-value" id="tempValue">--</span>
-                    <span class="sensor-unit">°C</span>
-                </div>
-            </div>
-            <div class="sensor-divider"></div>
-            <div class="sensor-item">
-                <span class="sensor-icon">💧</span>
-                <span class="sensor-label">Humidity</span>
-                <div class="sensor-data">
-                    <span class="sensor-value" id="humValue">--</span>
-                    <span class="sensor-unit">%</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tabs -->
-        <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap: wrap;">
-            <button class="auth-tab active" id="tab-controls" onclick="switchDashTab('controls')">Controls</button>
-            <button class="auth-tab" id="tab-schedules" onclick="switchDashTab('schedules')">Schedules</button>
-            <button class="auth-tab" id="tab-stats" onclick="switchDashTab('stats')">Stats</button>
-            <button class="auth-tab" id="tab-settings" onclick="switchDashTab('settings')">⚙️ Settings</button>
-        </div>
-
-        <!-- Controls View -->
-        <div id="view-controls">
-            <!-- Switch Controls Grid -->
-            <div class="controls-grid" id="switchGrid">
-                <!-- Switches injected by JS -->
-            </div>
-        </div>
-
-        <!-- Schedules View -->
-        <div id="view-schedules" style="display:none;">
-            <div class="sensor-card" style="flex-direction:column; align-items:stretch; gap:15px;">
-                <h3>Add Schedule</h3>
-                <div style="display:flex; gap:10px;">
-                    <select id="schDevice"
-                        style="flex:1; padding:10px; border-radius:10px; background:rgba(255,255,255,0.1); color:white; border:1px solid rgba(255,255,255,0.1);">
-                        <option value="relay1">Living Room</option>
-                        <option value="relay2">Bedroom</option>
-                        <option value="relay3">Kitchen</option>
-                        <option value="relay4">Fan</option>
-                    </select>
-                    <input type="time" id="schTime" style="flex:1;">
-                </div>
-                <div style="display:flex; gap:10px;">
-                    <select id="schAction"
-                        style="flex:1; padding:10px; border-radius:10px; background:rgba(255,255,255,0.1); color:white; border:1px solid rgba(255,255,255,0.1);">
-                        <option value="true">Turn ON</option>
-                        <option value="false">Turn OFF</option>
-                    </select>
-                    <button class="btn btn-primary" onclick="addSchedule()">Save</button>
-                </div>
-            </div>
-
-            <div id="schedulesList">
-                <!-- List items injected here -->
-            </div>
-        </div>
-
-        <!-- Stats View -->
-        <div id="view-stats" style="display:none;">
-            <div class="glass-panel" style="padding:20px; border-radius:20px; margin-bottom:20px;">
-                <h3 style="margin-bottom:15px;">Temperature History (24h)</h3>
-                <canvas id="tempChart" style="width:100%; height:250px;"></canvas>
-            </div>
-            <div class="glass-panel" style="padding:20px; border-radius:20px;">
-                <h3 style="margin-bottom:15px;">Humidity History (24h)</h3>
-                <canvas id="humChart" style="width:100%; height:250px;"></canvas>
-            </div>
-        </div>
-
-        <!-- Settings View -->
-        <div id="view-settings" style="display:none;">
-            <!-- Device Info -->
-            <div class="settings-section">
-                <h3>📡 Device Info</h3>
-                <div class="settings-row">
-                    <span class="settings-label">Device ID</span>
-                    <span class="settings-value" id="settingsDeviceId">--</span>
-                </div>
-                <div class="settings-row">
-                    <span class="settings-label">Device Name</span>
-                    <span class="settings-value" id="settingsDeviceName">--</span>
-                </div>
-                <div class="settings-row">
-                    <span class="settings-label">Status</span>
-                    <span class="uptime-badge offline" id="settingsStatusBadge">⚫ Offline</span>
-                </div>
-                <div class="settings-row">
-                    <span class="settings-label">Online Since</span>
-                    <span class="settings-value" id="settingsOnlineSince">--</span>
-                </div>
-                <div class="settings-row">
-                    <span class="settings-label">Uptime</span>
-                    <span class="settings-value" id="settingsUptime">--</span>
-                </div>
-            </div>
-
-            <!-- Button Names Manager -->
-            <div class="settings-section">
-                <h3>✏️ Customize Button Names</h3>
-                <div id="buttonNamesEditor">
-                    <!-- Populated by JS -->
-                </div>
-            </div>
-
-            <!-- Activity Log -->
-            <div class="settings-section">
-                <h3>📋 Activity Log</h3>
-                <div id="activityLog">
-                    <p style="color:var(--text-muted); font-size:0.9rem;">No activity yet</p>
-                </div>
-            </div>
-
-            <!-- Appearance -->
-            <div class="settings-section">
-                <h3>🎨 Appearance</h3>
-                <div class="settings-row">
-                    <span class="settings-label">Theme</span>
-                    <button class="theme-toggle-btn" onclick="toggleTheme()" id="settingsThemeBtn">🌙</button>
-                </div>
-            </div>
+        <!-- Switch Controls -->
+        <div class="controls-grid" id="controlsGrid">
+            <!-- Dynamically populated -->
         </div>
 
         <!-- ESP32 Setup Info -->
         <div
-            style="background:var(--bg-secondary);border:1px solid var(--glass-border);border-radius:20px;padding:24px;margin-top:24px;">
-            <h3 style="margin-bottom:8px;font-size:1.1em;color:var(--text-primary);">📡 ESP32 Setup</h3>
-            <p style="color:var(--text-muted);font-size:0.9em;line-height:1.6;">
+            style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-top:10px;">
+            <h3 style="margin-bottom:12px;font-size:1em;color:var(--text-secondary);">≡ƒôí ESP32 Setup</h3>
+            <p style="color:var(--text-muted);font-size:0.85em;line-height:1.6;">
                 Your ESP32 must be connected to WiFi and configured with Device ID: <strong id="setupDeviceId"
-                    style="color:var(--accent-primary);"></strong><br>
+                    style="color:var(--accent-blue);"></strong><br>
                 Update <code
                     style="background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px;">config.h</code> and
                 <code
@@ -203,34 +64,11 @@
         </div>
     </div>
 
-    <!-- Toast Container -->
-    <div class="toast-container" id="toastContainer"></div>
-
-    <!-- Mobile Bottom Nav -->
-    <div class="mobile-nav">
-        <a href="#" class="nav-item active" onclick="switchDashTab('controls')">
-            <span class="nav-icon">🏠</span>
-            <span>Home</span>
-        </a>
-        <a href="#" class="nav-item" onclick="switchDashTab('stats')">
-            <span class="nav-icon">📊</span>
-            <span>Stats</span>
-        </a>
-        <a href="#" class="nav-item" onclick="switchDashTab('settings')">
-            <span class="nav-icon">⚙️</span>
-            <span>Settings</span>
-        </a>
-        <a href="#" class="nav-item" onclick="logout()">
-            <span class="nav-icon">🔓</span>
-            <span>Logout</span>
-        </a>
-    </div>
-
     <!-- Config & Logic -->
     <script src="config.js"></script>
-    <!-- <script src="app.js"></script> -->
+    <script src="app.js"></script>
     <script>
-        const switchIcons = ['💡', '🛏️', '🍳', '🌀', '💡', '💡', '💡', '💡'];
+        const switchIcons = ['≡ƒÆí', '≡ƒ¢Å∩╕Å', '≡ƒì│', '≡ƒîÇ', '≡ƒÆí', '≡ƒÆí', '≡ƒÆí', '≡ƒÆí'];
         let currentDevice = null;
         let ws = null;
         const token = localStorage.getItem('access_token');
@@ -239,389 +77,76 @@
             window.location.href = 'index.html';
         }
 
-        // ============= Theme Toggle =============
-        function toggleTheme() {
-            const html = document.documentElement;
-            const current = html.getAttribute('data-theme') || 'dark';
-            const next = current === 'dark' ? 'light' : 'dark';
-            html.setAttribute('data-theme', next);
-            localStorage.setItem('theme', next);
-            updateThemeIcons(next);
-        }
-
-        function updateThemeIcons(theme) {
-            const icon = theme === 'dark' ? '🌙' : '☀️';
-            const el = document.getElementById('themeToggle');
-            if (el) el.textContent = icon;
-            const el2 = document.getElementById('settingsThemeBtn');
-            if (el2) el2.textContent = icon;
-        }
-
-        // Set icons on load
-        updateThemeIcons(document.documentElement.getAttribute('data-theme') || 'dark');
-
-        // ============= Device Status with Heartbeat =============
-        let deviceIsOnline = false;
-        let lastDataTime = null;
-        let onlineSinceTime = null;
-        let heartbeatTimer = null;
-        let uptimeInterval = null;
-        const activityLog = [];
-
-        function addActivity(message, type = 'info') {
-            const now = new Date();
-            activityLog.unshift({
-                time: now.toLocaleTimeString(),
-                message: message,
-                type: type
-            });
-            if (activityLog.length > 20) activityLog.pop();
-            renderActivityLog();
-        }
-
-        function renderActivityLog() {
-            const container = document.getElementById('activityLog');
-            if (!container) return;
-            if (activityLog.length === 0) {
-                container.innerHTML = '<p style="color:var(--text-muted); font-size:0.9rem;">No activity yet</p>';
-                return;
-            }
-            container.innerHTML = activityLog.map(item => {
-                const color = item.type === 'online' ? 'var(--accent-success)' :
-                    item.type === 'offline' ? 'var(--accent-danger)' :
-                        'var(--accent-primary)';
-                return `<div class="activity-item">
-                    <div class="activity-dot" style="background:${color}"></div>
-                    <span style="color:var(--text-muted); font-size:0.8rem; min-width:70px;">${item.time}</span>
-                    <span>${item.message}</span>
-                </div>`;
-            }).join('');
-        }
-
-        function markDeviceOnline() {
-            if (!deviceIsOnline) {
-                deviceIsOnline = true;
-                onlineSinceTime = new Date();
-                addActivity('ESP32 came online', 'online');
-                startUptimeCounter();
-            }
-            lastDataTime = Date.now();
-            updateStatus(true);
-            resetHeartbeat();
-        }
-
-        function markDeviceOffline() {
-            if (deviceIsOnline) {
-                deviceIsOnline = false;
-                addActivity('ESP32 went offline', 'offline');
-                stopUptimeCounter();
-            }
-            onlineSinceTime = null;
-            updateStatus(false);
-        }
-
-        function resetHeartbeat() {
-            clearTimeout(heartbeatTimer);
-            heartbeatTimer = setTimeout(() => {
-                markDeviceOffline();
-            }, 30000); // 30 seconds no data = offline
-        }
-
-        function startUptimeCounter() {
-            stopUptimeCounter();
-            uptimeInterval = setInterval(updateUptimeDisplay, 1000);
-        }
-
-        function stopUptimeCounter() {
-            clearInterval(uptimeInterval);
-            const el = document.getElementById('settingsUptime');
-            if (el) el.textContent = '--';
-            const badge = document.getElementById('settingsStatusBadge');
-            if (badge) {
-                badge.className = 'uptime-badge offline';
-                badge.textContent = '⚫ Offline';
-            }
-            const since = document.getElementById('settingsOnlineSince');
-            if (since) since.textContent = '--';
-        }
-
-        function updateUptimeDisplay() {
-            if (!onlineSinceTime) return;
-            const diff = Date.now() - onlineSinceTime.getTime();
-            const hrs = Math.floor(diff / 3600000);
-            const mins = Math.floor((diff % 3600000) / 60000);
-            const secs = Math.floor((diff % 60000) / 1000);
-            const el = document.getElementById('settingsUptime');
-            if (el) el.textContent = `${hrs}h ${mins}m ${secs}s`;
-            const badge = document.getElementById('settingsStatusBadge');
-            if (badge) {
-                badge.className = 'uptime-badge';
-                badge.textContent = '🟢 Online';
-            }
-            const since = document.getElementById('settingsOnlineSince');
-            if (since) since.textContent = onlineSinceTime.toLocaleString();
-        }
-
-        // ============= Custom Button Names =============
-        function getCustomName(relayKey, defaultName) {
-            return localStorage.getItem('relay_name_' + relayKey) || defaultName;
-        }
-
-        function setCustomName(relayKey, name) {
-            localStorage.setItem('relay_name_' + relayKey, name);
-            if (currentDevice) renderDevice(currentDevice);
-            renderButtonNamesEditor();
-            updateScheduleDropdown();
-        }
-
-        function promptRename(relayKey, currentName) {
-            event.stopPropagation();
-            const newName = prompt('Enter new name for this button:', currentName);
-            if (newName && newName.trim()) {
-                setCustomName(relayKey, newName.trim());
-                showToast(`Renamed to "${newName.trim()}"`, 'success');
-            }
-        }
-
-        function renderButtonNamesEditor() {
-            const container = document.getElementById('buttonNamesEditor');
-            if (!container || !currentDevice) return;
-            const relays = currentDevice.start_state || {};
-            const defaultNames = { relay1: 'Living Room', relay2: 'Bedroom', relay3: 'Kitchen', relay4: 'Fan' };
-            let html = '';
-            Object.keys(relays).sort().forEach((key, idx) => {
-                const defaultName = relays[key].name || defaultNames[key] || 'Switch ' + (idx + 1);
-                const customName = getCustomName(key, defaultName);
-                html += `<div class="settings-row">
-                    <span class="settings-label">${key.toUpperCase()}</span>
-                    <input class="edit-name-input" value="${customName}" 
-                           onchange="setCustomName('${key}', this.value)"
-                           placeholder="Enter name">
-                </div>`;
-            });
-            container.innerHTML = html;
-        }
-
-        function updateScheduleDropdown() {
-            const select = document.getElementById('schDevice');
-            if (!select || !currentDevice) return;
-            const relays = currentDevice.start_state || {};
-            const defaultNames = { relay1: 'Living Room', relay2: 'Bedroom', relay3: 'Kitchen', relay4: 'Fan' };
-            select.innerHTML = '';
-            Object.keys(relays).sort().forEach((key, idx) => {
-                const defaultName = relays[key].name || defaultNames[key] || 'Switch ' + (idx + 1);
-                const name = getCustomName(key, defaultName);
-                const opt = document.createElement('option');
-                opt.value = key;
-                opt.textContent = name;
-                select.appendChild(opt);
-            });
-        }
-
-        // ============= Core Dashboard Functions =============
+        // Initialize Dashboard
         initDashboard();
-
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-
-            let icon = 'ℹ️';
-            if (type === 'success') icon = '✅';
-            if (type === 'error') icon = '⚠️';
-
-            toast.innerHTML = `
-                <span class="toast-icon">${icon}</span>
-                <span class="toast-message">${message}</span>
-            `;
-
-            container.appendChild(toast);
-            setTimeout(() => {
-                toast.classList.add('hide');
-                toast.addEventListener('animationend', () => toast.remove());
-            }, 3000);
-        }
 
         async function initDashboard() {
             try {
+                // 1. Get User Info
                 const userRes = await fetch(`${API_URL}/users/me`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (!userRes.ok) throw new Error('Auth failed');
                 const user = await userRes.json();
-                document.getElementById('userName').textContent = user.email;
+                document.getElementById('userName').textContent = user.email; // or name if we add it to model
 
+                // 2. Get Devices
                 const devRes = await fetch(`${API_URL}/devices/`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const devices = await devRes.json();
 
                 if (devices.length === 0) {
-                    showToast("No devices found. Please register one.", 'error');
+                    showError("No devices found. Please register one.");
                     return;
                 }
 
+                // For now, take the first device
                 currentDevice = devices[0];
                 document.getElementById('userDeviceId').textContent = currentDevice.id;
                 document.getElementById('setupDeviceId').textContent = currentDevice.id;
 
-                // Settings page device info
-                document.getElementById('settingsDeviceId').textContent = currentDevice.id;
-                document.getElementById('settingsDeviceName').textContent = currentDevice.name || currentDevice.id;
-
+                // Render initial state
                 renderDevice(currentDevice);
-                if (currentDevice.temperature) updateSensorUI(currentDevice.temperature, currentDevice.humidity);
 
-                // Initially device is offline until we get ESP32 data
-                updateStatus(false);
-
+                // 3. Connect WebSocket
                 connectWebSocket(currentDevice.id);
 
                 document.getElementById('loadingOverlay').style.display = 'none';
-                const mainDash = document.getElementById('mainDashboard');
-                mainDash.style.display = 'block';
-                mainDash.classList.add('dashboard-enter');
-
-                renderButtonNamesEditor();
-                updateScheduleDropdown();
-                addActivity('Dashboard loaded', 'info');
+                document.getElementById('mainDashboard').style.display = 'block';
 
             } catch (err) {
                 console.error(err);
                 if (err.message === 'Auth failed') logout();
-                showToast("Error loading dashboard: " + err.message, 'error');
+                alert("Error loading dashboard: " + err.message);
             }
         }
 
-        // ── WebSocket state ──
-        let wsReconnectDelay = 3000;    // starts at 3s
-        let wsReconnectCount = 0;
-        const WS_MAX_RECONNECTS = 15;
-        const WS_MAX_DELAY = 30000;     // cap at 30s
-        let wsReconnectTimer = null;
-        let wsCurrentDeviceId = null;
-        let wsIntentionalClose = false;
-
         function connectWebSocket(deviceId) {
-            wsCurrentDeviceId = deviceId;
-            wsIntentionalClose = false;
-            _doConnect(deviceId);
-
-            // Page Visibility API: pause when tab is hidden (saves battery on mobile)
-            document.addEventListener('visibilitychange', () => {
-                if (document.hidden) {
-                    // Phone locked or app backgrounded — stop reconnect timer
-                    clearTimeout(wsReconnectTimer);
-                } else {
-                    // Screen woke up — reconnect if not already connected
-                    if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
-                        wsReconnectDelay = 3000;
-                        wsReconnectCount = 0;
-                        _doConnect(wsCurrentDeviceId);
-                    }
-                }
-            });
-        }
-
-        function _doConnect(deviceId) {
-            if (ws) { wsIntentionalClose = true; ws.close(); }
-            ws = new WebSocket(`${WS_URL}/${deviceId}?token=${token}`);
+            ws = new WebSocket(`${WS_URL}/${deviceId}`);
 
             ws.onopen = () => {
                 console.log("WS Connected");
-                wsReconnectDelay = 3000;   // reset backoff on success
-                wsReconnectCount = 0;
-                showToast("Connected to Real-time Server", "success");
-                addActivity('WebSocket connected', 'info');
-                // Remove manual reconnect button if shown
-                const btn = document.getElementById('wsReconnectBtn');
-                if (btn) btn.remove();
+                updateStatus(true);
             };
 
             ws.onmessage = (event) => {
                 const msg = JSON.parse(event.data);
                 if (msg.type === 'update') {
+                    console.log("Update received:", msg.data);
+                    // Merge update into current state
                     if (!currentDevice.start_state) currentDevice.start_state = {};
                     Object.assign(currentDevice.start_state, msg.data);
                     renderDevice(currentDevice);
-                    markDeviceOnline();
-                } else if (msg.type === 'sensor_update') {
-                    updateSensorUI(msg.data.temperature, msg.data.humidity);
-                    markDeviceOnline();
                 }
-            };
-
-            ws.onerror = (e) => {
-                console.warn("WS Error", e);
             };
 
             ws.onclose = () => {
-                if (wsIntentionalClose) return;   // don't reconnect if we closed it ourselves
-
-                markDeviceOffline();
-                wsReconnectCount++;
-
-                if (wsReconnectCount > WS_MAX_RECONNECTS) {
-                    // Too many failures — show manual button, stop auto-reconnect
-                    addActivity('Connection lost. Tap to reconnect.', 'offline');
-                    _showReconnectButton(deviceId);
-                    return;
-                }
-
-                // Only log once, not every single reconnect attempt
-                if (wsReconnectCount === 1) {
-                    addActivity('WebSocket disconnected — reconnecting...', 'offline');
-                }
-
-                // Exponential backoff
-                clearTimeout(wsReconnectTimer);
-                wsReconnectTimer = setTimeout(() => {
-                    if (!document.hidden) _doConnect(deviceId);
-                }, wsReconnectDelay);
-
-                wsReconnectDelay = Math.min(wsReconnectDelay * 2, WS_MAX_DELAY);
+                console.log("WS Disconnected");
+                updateStatus(false);
+                // Reconnect after 3s
+                setTimeout(() => connectWebSocket(deviceId), 3000);
             };
-        }
-
-        function _showReconnectButton(deviceId) {
-            if (document.getElementById('wsReconnectBtn')) return;
-            const container = document.getElementById('toastContainer');
-            const btn = document.createElement('button');
-            btn.id = 'wsReconnectBtn';
-            btn.textContent = '🔄 Tap to Reconnect';
-            btn.style.cssText = 'position:fixed;bottom:90px;right:20px;z-index:9999;padding:12px 20px;background:#7c3aed;color:white;border:none;border-radius:10px;cursor:pointer;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.4);';
-            btn.onclick = () => {
-                btn.remove();
-                wsReconnectDelay = 3000;
-                wsReconnectCount = 0;
-                _doConnect(deviceId);
-            };
-            document.body.appendChild(btn);
-        }
-
-
-        function updateSensorUI(temp, hum) {
-            if (temp !== undefined && temp !== null && temp !== "null")
-                document.getElementById('tempValue').textContent = typeof temp === 'number' ? temp.toFixed(1) : temp;
-
-            if (hum !== undefined && hum !== null && hum !== "null")
-                document.getElementById('humValue').textContent = typeof hum === 'number' ? hum.toFixed(0) : hum;
-
-            const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-            if (tempChart && temp !== undefined && temp !== null) {
-                tempChart.data.labels.push(now);
-                tempChart.data.datasets[0].data.push(temp);
-                if (tempChart.data.labels.length > 50) { tempChart.data.labels.shift(); tempChart.data.datasets[0].data.shift(); }
-                tempChart.update();
-            }
-
-            if (humChart && hum !== undefined && hum !== null) {
-                humChart.data.labels.push(now);
-                humChart.data.datasets[0].data.push(hum);
-                if (humChart.data.labels.length > 50) { humChart.data.labels.shift(); humChart.data.datasets[0].data.shift(); }
-                humChart.update();
-            }
         }
 
         function updateStatus(online) {
@@ -629,58 +154,50 @@
             const txt = document.getElementById('statusText');
             if (online) {
                 dot.className = 'status-dot online';
-                txt.textContent = 'ESP32 Online';
-                txt.style.color = 'var(--accent-success)';
+                txt.textContent = 'ESP32 Online (WS)'; // "WS Connected" really, backend is online
+                txt.style.color = 'var(--accent-green)';
             } else {
                 dot.className = 'status-dot offline';
-                txt.textContent = 'ESP32 Offline';
-                txt.style.color = 'var(--accent-danger)';
+                txt.textContent = 'Disconnecting...';
+                txt.style.color = 'var(--accent-red)';
             }
         }
 
         function renderDevice(device) {
-            const grid = document.getElementById('switchGrid');
+            const grid = document.getElementById('controlsGrid');
             const relays = device.start_state || {};
-            const defaultNames = { relay1: 'Living Room', relay2: 'Bedroom', relay3: 'Kitchen', relay4: 'Fan' };
 
+            // Default if empty
             if (Object.keys(relays).length === 0) {
+                // Assume 4 relays for simulation if empty
                 relays.relay1 = { state: false, name: "Living Room" };
                 relays.relay2 = { state: false, name: "Bedroom" };
                 relays.relay3 = { state: false, name: "Kitchen" };
                 relays.relay4 = { state: false, name: "Fan" };
             }
 
-            const offline = !deviceIsOnline;
-
             let html = '';
-
-            // ── Offline banner ──
-            if (offline) {
-                html += `<div style="grid-column:1/-1;text-align:center;padding:18px 12px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25);border-radius:14px;margin-bottom:4px;">
-                    <span style="font-size:1.8em;">📵</span>
-                    <div style="font-weight:700;color:#ef4444;margin-top:6px;">Device Offline</div>
-                    <div style="font-size:.85em;color:#94a3b8;margin-top:4px;">Connect your ESP32 to control switches</div>
-                </div>`;
-            }
-
+            // Sort keys to keep order
             Object.keys(relays).sort().forEach((key, idx) => {
                 const relay = relays[key];
                 const isOn = relay.state === true;
-                const defaultName = relay.name || defaultNames[key] || 'Switch ' + (idx + 1);
-                const name = getCustomName(key, defaultName);
-                const icon = switchIcons[idx] || '💡';
+                const name = relay.name || 'Switch ' + (idx + 1);
+                const icon = switchIcons[idx] || '≡ƒÆí';
 
                 html += `
-                <div class="switch-card ${isOn ? 'active' : ''} ${offline ? 'switch-offline' : ''}" 
-                     onclick="toggleRelay('${device.id}', '${key}', ${isOn})" 
-                     title="${offline ? 'Device is offline' : ''}">
-                    <button class="switch-edit-btn" onclick="promptRename('${key}', '${name.replace(/'/g, "\\'")}')" title="Rename">✏️</button>
-                    <div class="switch-toggle"></div>
-                    <div class="switch-icon-wrapper">${icon}</div>
-                    <div class="switch-content">
-                        <div class="switch-name">${name}</div>
-                        <div class="switch-state">${offline ? '⚫ Offline' : (isOn ? 'ON' : 'OFF')}</div>
+                <div class="switch-card" onclick="toggleRelay('${device.id}', '${key}', ${isOn})">
+                    <div class="switch-info">
+                        <span class="switch-icon">${icon}</span>
+                        <div>
+                            <div class="switch-name">${name}</div>
+                            <div class="switch-status">${isOn ? '≡ƒƒó ON' : 'ΓÜ½ OFF'}</div>
+                        </div>
                     </div>
+                    <label class="toggle" onclick="event.stopPropagation()">
+                        <input type="checkbox" ${isOn ? 'checked' : ''} 
+                               onchange="toggleRelay('${device.id}', '${key}', ${isOn})">
+                        <span class="toggle-slider"></span>
+                    </label>
                 </div>`;
             });
 
@@ -688,34 +205,44 @@
         }
 
         async function toggleRelay(deviceId, key, currentState) {
-            // Block if device is offline
-            if (!deviceIsOnline) {
-                showToast('⚠️ Device is offline — connect ESP32 first', 'error');
-                return;
-            }
-
             const newState = !currentState;
+            // Optimistic update
             if (currentDevice.start_state && currentDevice.start_state[key]) {
                 currentDevice.start_state[key].state = newState;
                 renderDevice(currentDevice);
             }
 
-            const action = newState ? 'on' : 'off';
+            // Send to Backend via REST (could use WS too, but REST ensures persistence confirm)
+            // Or use WS for speed: ws.send(JSON.stringify({type: 'command', data: {[key]: {state: newState}}}))
+
+            // Let's use REST API
             try {
-                const res = await fetch(`${API_URL}/devices/${deviceId}/relays/${key}/${action}`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` }
+                const update = {};
+                update[key] = { state: newState };
+
+                // Assuming we want to keep names if they exist, but backend merge handles it.
+                // Just send state change.
+
+                await fetch(`${API_URL}/devices/${deviceId}/state`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // 'Authorization': `Bearer ${token}` // Endpoint currently unprotected or needs auth? 
+                        // Implementation plan said "current_user" commented out. 
+                        // But wait, "Phase 1" code had current_user commented out. 
+                        // To be safe, let's include header, if backend ignores it, fine.
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(update)
                 });
-                if (!res.ok) throw new Error("API Error");
-                const customName = getCustomName(key, key);
-                addActivity(`${customName} turned ${action.toUpperCase()}`, 'info');
             } catch (e) {
                 console.error("Toggle failed", e);
+                // Revert optimistic update
                 if (currentDevice.start_state && currentDevice.start_state[key]) {
                     currentDevice.start_state[key].state = currentState;
                     renderDevice(currentDevice);
                 }
-                showToast("Failed to toggle switch", 'error');
+                alert("Failed to toggle switch");
             }
         }
 
@@ -724,164 +251,6 @@
             window.location.href = 'index.html';
         }
 
-        function switchDashTab(tab) {
-            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-            document.getElementById('tab-' + tab).classList.add('active');
-
-            ['controls', 'schedules', 'stats', 'settings'].forEach(v => {
-                document.getElementById('view-' + v).style.display = 'none';
-            });
-            document.getElementById('view-' + tab).style.display = 'block';
-
-            if (tab === 'schedules') loadSchedules();
-            else if (tab === 'stats') loadStats();
-            else if (tab === 'settings') {
-                renderButtonNamesEditor();
-                renderActivityLog();
-            }
-        }
-
-        let tempChart = null;
-        let humChart = null;
-
-        async function loadStats() {
-            if (!currentDevice) return;
-            try {
-                const res = await fetch(`${API_URL}/stats/${currentDevice.id}/stats?hours=24`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (!res.ok) throw new Error("Failed to fetch stats");
-                const data = await res.json();
-                const labels = data.map(d => new Date(d.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-                const temps = data.map(d => d.temperature);
-                const hums = data.map(d => d.humidity);
-                renderCharts(labels, temps, hums);
-            } catch (e) {
-                console.error(e);
-                showToast("Error loading stats", "error");
-            }
-        }
-
-        function renderCharts(labels, temps, hums) {
-            const ctxTemp = document.getElementById('tempChart').getContext('2d');
-            const ctxHum = document.getElementById('humChart').getContext('2d');
-            const commonOptions = {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                    y: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,0.05)' } }
-                },
-                plugins: { legend: { display: false } }
-            };
-
-            if (tempChart) tempChart.destroy();
-            tempChart = new Chart(ctxTemp, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{ label: 'Temperature (°C)', data: temps, borderColor: '#6366f1', backgroundColor: 'rgba(99, 102, 241, 0.1)', fill: true, tension: 0.4 }]
-                },
-                options: commonOptions
-            });
-
-            if (humChart) humChart.destroy();
-            humChart = new Chart(ctxHum, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{ label: 'Humidity (%)', data: hums, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.4 }]
-                },
-                options: commonOptions
-            });
-        }
-
-        async function loadSchedules() {
-            const token = localStorage.getItem('access_token');
-            const list = document.getElementById('schedulesList');
-            list.innerHTML = '<p style="text-align:center; color:gray;">Loading...</p>';
-
-            try {
-                const res = await fetch(`${API_URL}/schedules/`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await res.json();
-                list.innerHTML = '';
-                if (data.length === 0) {
-                    list.innerHTML = '<p style="text-align:center; color:gray;">No schedules set.</p>';
-                    return;
-                }
-
-                data.forEach(sch => {
-                    const item = document.createElement('div');
-                    item.className = 'device-status';
-                    item.style.justifyContent = 'space-between';
-                    item.innerHTML = `
-                        <div>
-                            <span style="font-weight:bold; font-size:1.2em;">${sch.time}</span>
-                            <span style="color:gray; font-size:0.9em;">
-                                ${formatRelayName(sch.relay_key)} -> 
-                                <span style="color:${sch.action ? '#10b981' : '#ef4444'}">${sch.action ? 'ON' : 'OFF'}</span>
-                            </span>
-                        </div>
-                        <button onclick="deleteSchedule(${sch.id})" style="background:none; border:none; cursor:pointer;">❌</button>
-                    `;
-                    list.appendChild(item);
-                });
-            } catch (e) {
-                console.error(e);
-                list.innerHTML = '<p style="color:red; text-align:center;">Error loading schedules.</p>';
-            }
-        }
-
-        function formatRelayName(key) {
-            const defaults = { 'relay1': 'Living Room', 'relay2': 'Bedroom', 'relay3': 'Kitchen', 'relay4': 'Fan' };
-            return getCustomName(key, defaults[key] || key);
-        }
-
-        async function addSchedule() {
-            const token = localStorage.getItem('access_token');
-            const time = document.getElementById('schTime').value;
-            const relay = document.getElementById('schDevice').value;
-            const action = document.getElementById('schAction').value === 'true';
-
-            if (!time) return showToast("Please select a time", 'error');
-
-            try {
-                await fetch(`${API_URL}/schedules/`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        device_id: currentDevice ? currentDevice.id : 'SH-001',
-                        relay_key: relay,
-                        action: action,
-                        time: time
-                    })
-                });
-                if (!res.ok) throw new Error('Server error');
-                showToast("Schedule added successfully!", "success");
-                loadSchedules();
-            } catch (e) {
-                showToast("Failed to save schedule", 'error');
-            }
-        }
-
-        async function deleteSchedule(id) {
-            try {
-                const res = await fetch(`${API_URL}/schedules/${id}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (!res.ok) throw new Error('Server error');
-                showToast("Schedule deleted", "success");
-                loadSchedules();
-            } catch (e) {
-                showToast("Failed to delete schedule", 'error');
-            }
-        }
     </script>
 </body>
 

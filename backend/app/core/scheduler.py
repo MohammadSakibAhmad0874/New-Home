@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy import select
 from db.session import SessionLocal
 from db.models import Schedule, Device
@@ -43,3 +43,35 @@ async def check_schedules():
         now = datetime.now()
         sleep_seconds = 60 - now.second
         await asyncio.sleep(sleep_seconds)
+
+
+async def check_device_online_status():
+    """
+    Runs every 60 seconds.
+    Marks any device as offline if it hasn't sent a heartbeat in the last 5 minutes.
+    This prevents devices from staying 'online' forever after they disconnect.
+    """
+    print("📡 Device online-status watcher started...")
+    OFFLINE_THRESHOLD = timedelta(minutes=5)
+    while True:
+        try:
+            async with SessionLocal() as db:
+                cutoff = datetime.utcnow() - OFFLINE_THRESHOLD
+                result = await db.execute(
+                    select(Device).filter(
+                        Device.online == True,
+                        Device.last_seen < cutoff
+                    )
+                )
+                stale_devices = result.scalars().all()
+                for device in stale_devices:
+                    device.online = False
+                    db.add(device)
+                    print(f"📴 Device {device.id} marked offline (last seen: {device.last_seen})")
+                if stale_devices:
+                    await db.commit()
+        except Exception as e:
+            print(f"❌ Online-status watcher error: {e}")
+
+        await asyncio.sleep(60)
+

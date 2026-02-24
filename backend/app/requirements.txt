@@ -1,5 +1,4 @@
 alembic
-aiosmtplib
 asyncpg
 celery[redis]
 email-validator
