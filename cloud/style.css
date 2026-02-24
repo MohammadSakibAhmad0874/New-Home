@@ -730,6 +730,20 @@ input:focus {
   color: var(--accent-primary);
 }
 
+/* Offline state — visually disabled */
+.switch-offline {
+  opacity: 0.45;
+  cursor: not-allowed !important;
+  filter: grayscale(60%);
+}
+
+.switch-offline:hover {
+  transform: none !important;
+  border-color: var(--glass-border) !important;
+  background: var(--bg-secondary) !important;
+  box-shadow: none !important;
+}
+
 /* Toggle Switch Visual */
 .switch-toggle {
   position: absolute;

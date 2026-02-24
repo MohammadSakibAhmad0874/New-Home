@@ -1284,7 +1284,7 @@
 
                 document.getElementById('statUsers').textContent = users.length;
                 document.getElementById('statDevices').textContent = devices.length;
-                document.getElementById('statOnline').textContent = devices.filter(d => d.is_online).length;
+                document.getElementById('statOnline').textContent = devices.filter(d => d.online).length;
                 document.getElementById('statAdmins').textContent = users.filter(u => u.is_superuser).length;
 
                 const recent = devices.slice(0, 6);
@@ -1292,8 +1292,8 @@
                 <tr>
                     <td class="mono">${d.id}</td>
                     <td>${d.name || '—'}</td>
-                    <td>${d.device_type || d.type || '—'}</td>
-                    <td><span class="badge ${d.is_online ? 'badge-on' : 'badge-off'}">${d.is_online ? '🟢 Online' : '⚫ Offline'}</span></td>
+                    <td>${d.type || '—'}</td>
+                    <td><span class="badge ${d.online ? 'badge-on' : 'badge-off'}">${d.online ? '🟢 Online' : '⚫ Offline'}</span></td>
                 </tr>`).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px;">No devices</td></tr>';
             } catch { }
         }
@@ -1318,10 +1318,10 @@
             <tr>
                 <td class="mono" style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${d.id}">${d.id}</td>
                 <td>${d.name || '—'}</td>
-                <td>${d.device_type || d.type || '—'}</td>
+                <td>${d.type || '—'}</td>
                 <td class="mono" style="font-size:.75em;">${d.owner_id || '—'}</td>
-                <td class="mono" style="font-size:.78em;">${d.local_ip || '—'}</td>
-                <td><span class="badge ${d.is_online ? 'badge-on' : 'badge-off'}">${d.is_online ? '🟢 Online' : '⚫ Offline'}</span></td>
+                <td class="mono" style="font-size:.78em;">${d.ip_address || '—'}</td>
+                <td><span class="badge ${d.online ? 'badge-on' : 'badge-off'}">${d.online ? '🟢 Online' : '⚫ Offline'}</span></td>
                 <td>${buildRelayBtns(d)}</td>
                 <td>
                     <div class="btn-row">
@@ -1345,7 +1345,7 @@
 
         function filterDevices() {
             const q = document.getElementById('deviceSearch').value.toLowerCase();
-            renderDevices(allDevices.filter(d => (d.id + d.name + d.device_type + d.local_ip).toLowerCase().includes(q)));
+            renderDevices(allDevices.filter(d => (d.id + d.name + d.type + d.ip_address).toLowerCase().includes(q)));
         }
 
         function openRename(id, name) {
