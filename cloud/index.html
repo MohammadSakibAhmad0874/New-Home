@@ -6,7 +6,195 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SmartHome Cloud - Login</title>
     <meta name="description" content="Control your ESP32 Smart Home from anywhere in the world">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* ── Extra styles for the 3-tab layout ─────── */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .auth-tabs {
+            display: flex;
+            gap: 4px;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 24px;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 9px 6px;
+            border-radius: 9px;
+            border: none;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.82em;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: background .2s, color .2s;
+            white-space: nowrap;
+        }
+
+        .auth-tab.active {
+            background: rgba(139, 92, 246, 0.22);
+            color: #c4b5fd;
+        }
+
+        /* ── Form inputs (override / supplement style.css) */
+        .auth-form .form-group label {
+            display: block;
+            font-size: 0.72em;
+            font-weight: 600;
+            letter-spacing: .07em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.45);
+            margin-bottom: 7px;
+        }
+
+        .auth-form .form-group input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 12px 14px;
+            color: #f0f0f0;
+            font-size: 0.92em;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        .auth-form .form-group input::placeholder {
+            color: rgba(255, 255, 255, 0.2);
+        }
+
+        .auth-form .form-group input:focus {
+            border-color: rgba(139, 92, 246, 0.6);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.12);
+        }
+
+        /* ── Section divider ─────────────────────────── */
+        .form-section-label {
+            text-align: center;
+            font-size: 0.7em;
+            color: rgba(255, 255, 255, 0.25);
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            margin: 20px 0 18px;
+            position: relative;
+        }
+
+        .form-section-label::before,
+        .form-section-label::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 36%;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .form-section-label::before {
+            left: 0;
+        }
+
+        .form-section-label::after {
+            right: 0;
+        }
+
+        /* ── Primary btn ─────────────────────────────── */
+        .btn-submit {
+            width: 100%;
+            padding: 13px;
+            border-radius: 11px;
+            border: none;
+            background: linear-gradient(135deg, #7c3aed, #06b6d4);
+            color: #fff;
+            font-size: 0.95em;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            margin-top: 8px;
+            letter-spacing: .01em;
+            transition: opacity .2s, transform .15s;
+        }
+
+        .btn-submit:hover {
+            opacity: .87;
+            transform: translateY(-1px);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        .btn-submit:disabled {
+            opacity: .45;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ── Add Device tab — special card ───────────── */
+        .device-id-hero {
+            background: rgba(6, 182, 212, 0.07);
+            border: 1px solid rgba(6, 182, 212, 0.18);
+            border-radius: 14px;
+            padding: 16px 18px;
+            margin-bottom: 22px;
+            font-size: 0.8em;
+            color: rgba(255, 255, 255, 0.5);
+            line-height: 1.6;
+        }
+
+        .device-id-hero strong {
+            color: #67e8f9;
+        }
+
+        .device-id-hero code {
+            background: rgba(255, 255, 255, 0.07);
+            padding: 2px 7px;
+            border-radius: 5px;
+            font-size: 0.95em;
+            color: #a5f3fc;
+        }
+
+        /* ── Auth form visibility ─────────────────────── */
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+        }
+
+        /* ── Messages ─────────────────────────────────── */
+        .msg {
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 0.83em;
+            margin-bottom: 14px;
+            display: none;
+        }
+
+        .msg.error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            color: #fca5a5;
+            display: block;
+        }
+
+        .msg.success {
+            background: rgba(52, 211, 153, 0.1);
+            border: 1px solid rgba(52, 211, 153, 0.25);
+            color: #6ee7b7;
+            display: block;
+        }
+    </style>
 </head>
 
 <body>
@@ -18,59 +206,98 @@
 
     <div class="auth-container">
         <div class="auth-card">
+            <!-- Logo -->
             <div class="auth-logo">
-                <span class="icon">≡ƒÅá</span>
+                <span class="icon">🏠</span>
                 <h1>SmartHome Cloud</h1>
                 <p>Control your home from anywhere</p>
             </div>
 
-            <div id="errorMsg" class="error-msg"></div>
-            <div id="successMsg" class="success-msg"></div>
+            <!-- Messages -->
+            <div id="errorMsg" class="msg error"></div>
+            <div id="successMsg" class="msg success"></div>
 
             <!-- Tabs -->
             <div class="auth-tabs">
-                <button class="auth-tab active" onclick="switchTab('login')">Login</button>
-                <button class="auth-tab" onclick="switchTab('register')">Register</button>
+                <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Sign In</button>
+                <button class="auth-tab" id="tab-register" onclick="switchTab('register')">Create Account</button>
+                <button class="auth-tab" id="tab-adddevice" onclick="switchTab('adddevice')">＋ Add Device</button>
             </div>
 
-            <!-- Login Form -->
+            <!-- ══ LOGIN FORM ══════════════════════════ -->
             <form id="loginForm" class="auth-form active" onsubmit="handleLogin(event)">
                 <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="loginEmail" placeholder="your@email.com" required autocomplete="username">
+                    <label>Email Address</label>
+                    <input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="username">
                 </div>
                 <div class="form-group">
                     <label>Password</label>
                     <input type="password" id="loginPassword" placeholder="Enter your password" required
                         autocomplete="current-password">
                 </div>
-                <button type="submit" class="btn btn-primary" id="loginBtn">≡ƒöæ Login to Dashboard</button>
+                <button type="submit" class="btn-submit" id="loginBtn">🔐 Login to Dashboard</button>
             </form>
 
-            <!-- Register Form -->
+            <!-- ══ REGISTER FORM ═══════════════════════ -->
             <form id="registerForm" class="auth-form" onsubmit="handleRegister(event)">
                 <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="regEmail" placeholder="your@email.com" required>
+                    <label>Email Address</label>
+                    <input type="email" id="regEmail" placeholder="you@example.com" required>
                 </div>
                 <div class="form-group">
                     <label>Password</label>
                     <input type="password" id="regPassword" placeholder="Min 6 characters" required minlength="6">
                 </div>
 
-                <hr style="margin: 20px 0; border: 0; border-top: 1px solid var(--border);">
-                <p style="color: var(--text-muted); margin-bottom: 15px; font-size: 0.9em;">Device Setup</p>
+                <div class="form-section-label">Device Setup</div>
+
+                <div class="device-id-hero">
+                    Enter the <strong>Device ID</strong> exactly as configured in your ESP32 firmware
+                    (<code>config.h → DEVICE_ID</code>). Example: <code>SH-001</code>
+                </div>
 
                 <div class="form-group">
                     <label>Device ID</label>
-                    <input type="text" id="regDeviceId" placeholder="e.g. SH-001 (Must match ESP32)" required>
+                    <input type="text" id="regDeviceId" placeholder="e.g. SH-001 (must match firmware)" required>
                 </div>
                 <div class="form-group">
                     <label>Device Name</label>
-                    <input type="text" id="regDeviceName" placeholder="e.g. My Home" required>
+                    <input type="text" id="regDeviceName" placeholder="e.g. Living Room Hub" required>
                 </div>
-                <button type="submit" class="btn btn-primary" id="registerBtn">≡ƒô▒ Register & Create Account</button>
+                <button type="submit" class="btn-submit" id="registerBtn">📋 Create Account →</button>
             </form>
+
+            <!-- ══ ADD DEVICE FORM (for existing users) ═ -->
+            <form id="addDeviceForm" class="auth-form" onsubmit="handleAddDevice(event)">
+                <div class="device-id-hero">
+                    Already have an account? Log in first, then add more ESP32 devices here.<br><br>
+                    Enter the <strong>Device ID</strong> exactly as it appears in your firmware's
+                    <code>config.h</code> file — look for <code>DEVICE_ID</code>.
+                </div>
+
+                <div class="form-group">
+                    <label>Your Email</label>
+                    <input type="email" id="addEmail" placeholder="you@example.com" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label>Your Password</label>
+                    <input type="password" id="addPassword" placeholder="Enter your password" required
+                        autocomplete="current-password">
+                </div>
+
+                <div class="form-section-label">New Device</div>
+
+                <div class="form-group">
+                    <label>Device ID</label>
+                    <input type="text" id="addDeviceId" placeholder="e.g. SH-002 (must match firmware)" required>
+                </div>
+                <div class="form-group">
+                    <label>Device Name</label>
+                    <input type="text" id="addDeviceName" placeholder="e.g. Bedroom Controller" required>
+                </div>
+                <button type="submit" class="btn-submit" id="addDeviceBtn">➕ Add Device to My Account →</button>
+            </form>
+
         </div>
     </div>
 
@@ -78,7 +305,7 @@
     <script src="config.js"></script>
     <script src="app.js"></script>
     <script>
-        // Check if already logged in
+        // If already logged in, skip login page
         const token = localStorage.getItem('access_token');
         if (token) {
             window.location.href = 'dashboard.html';
@@ -86,132 +313,193 @@
             document.getElementById('loadingOverlay').style.display = 'none';
         }
 
+        /* ── Tab switcher ───────────────────────────── */
         function switchTab(tab) {
-            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-
-            if (tab === 'login') {
-                document.querySelectorAll('.auth-tab')[0].classList.add('active');
-                document.getElementById('loginForm').classList.add('active');
-            } else {
-                document.querySelectorAll('.auth-tab')[1].classList.add('active');
-                document.getElementById('registerForm').classList.add('active');
-            }
+            ['login', 'register', 'adddevice'].forEach(t => {
+                document.getElementById('tab-' + t)?.classList.remove('active');
+                const form = document.getElementById(t === 'adddevice' ? 'addDeviceForm' : t + 'Form');
+                if (form) form.classList.remove('active');
+            });
+            document.getElementById('tab-' + tab)?.classList.add('active');
+            const activeForm = tab === 'adddevice' ? 'addDeviceForm' : tab + 'Form';
+            document.getElementById(activeForm)?.classList.add('active');
             clearMessages();
         }
 
+        /* ── Message helpers ────────────────────────── */
+        function showError(msg) {
+            const el = document.getElementById('errorMsg');
+            el.textContent = msg; el.className = 'msg error';
+        }
+        function showSuccess(msg) {
+            const el = document.getElementById('successMsg');
+            el.textContent = msg; el.className = 'msg success';
+        }
+        function clearMessages() {
+            document.getElementById('errorMsg').className = 'msg';
+            document.getElementById('successMsg').className = 'msg';
+        }
+
+        /* ── LOGIN ──────────────────────────────────── */
         async function handleLogin(e) {
             e.preventDefault();
             const btn = document.getElementById('loginBtn');
-            btn.disabled = true;
-            btn.textContent = 'ΓÅ│ Logging in...';
+            btn.disabled = true; btn.textContent = '⏳ Logging in...';
             clearMessages();
 
             const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
 
             try {
-                // 1. Get Token
-                const formData = new URLSearchParams();
-                formData.append('username', email);
-                formData.append('password', password);
+                const fd = new URLSearchParams();
+                fd.append('username', email);
+                fd.append('password', password);
 
-                const response = await fetch(`${API_URL}/login/access-token`, {
+                const res = await fetch(`${API_URL}/login/access-token`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: formData
+                    body: fd
                 });
 
-                if (!response.ok) {
-                    const err = await response.json();
+                if (!res.ok) {
+                    const err = await res.json();
                     throw new Error(err.detail || 'Login failed');
                 }
 
-                const data = await response.json();
+                const data = await res.json();
                 localStorage.setItem('access_token', data.access_token);
-
-                // Redirect
                 window.location.href = 'dashboard.html';
 
             } catch (err) {
-                showError(err.message);
+                showError('❌ ' + err.message);
                 btn.disabled = false;
-                btn.textContent = '≡ƒöæ Login to Dashboard';
+                btn.textContent = '🔐 Login to Dashboard';
             }
         }
 
+        /* ── REGISTER (new user + first device) ──────── */
         async function handleRegister(e) {
             e.preventDefault();
             const btn = document.getElementById('registerBtn');
-            btn.disabled = true;
-            btn.textContent = 'ΓÅ│ Registering...';
+            btn.disabled = true; btn.textContent = '⏳ Creating account...';
             clearMessages();
 
             const email = document.getElementById('regEmail').value.trim();
             const password = document.getElementById('regPassword').value;
-            const deviceId = document.getElementById('regDeviceId').value.trim();
+            const deviceId = document.getElementById('regDeviceId').value.trim().toUpperCase();
             const deviceName = document.getElementById('regDeviceName').value.trim();
 
+            // Validate Device ID format
+            if (!/^SH-\d+$/i.test(deviceId)) {
+                showError('⚠️ Device ID must be in the format SH-001, SH-002, etc.');
+                btn.disabled = false; btn.textContent = '📋 Create Account →';
+                return;
+            }
+
             try {
-                // 1. Create User
+                // 1. Create user
                 let res = await fetch(`${API_URL}/users/`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
                 });
-
                 if (!res.ok) {
                     const err = await res.json();
-                    throw new Error(err.detail || 'User registration failed');
+                    throw new Error(err.detail || 'Registration failed');
                 }
 
-                // 2. Login to get Token (to register device)
-                const formData = new URLSearchParams();
-                formData.append('username', email);
-                formData.append('password', password);
-
+                // 2. Auto-login to get token
+                const fd = new URLSearchParams();
+                fd.append('username', email); fd.append('password', password);
                 res = await fetch(`${API_URL}/login/access-token`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: formData
+                    body: fd
                 });
-
                 if (!res.ok) throw new Error('Auto-login failed after registration');
-                const tokenData = await res.json();
-                const token = tokenData.access_token;
-                localStorage.setItem('access_token', token);
+                const { access_token } = await res.json();
+                localStorage.setItem('access_token', access_token);
 
-                // 3. Register Device
+                // 3. Register device
                 res = await fetch(`${API_URL}/devices/`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${access_token}`
                     },
-                    body: JSON.stringify({
-                        id: deviceId,
-                        name: deviceName,
-                        type: 'esp32'
-                    })
+                    body: JSON.stringify({ id: deviceId, name: deviceName, type: 'esp32' })
                 });
-
                 if (!res.ok) {
                     const err = await res.json();
-                    // If device fails, usually means ID taken, but user is created.
-                    // Let them proceed to dashboard but show warning? Or fail?
-                    // For now, throw and let them try again (maybe just login + register device in dashboard).
                     throw new Error(err.detail || 'Device registration failed');
                 }
 
-                showSuccess('Γ£à Account & Device Created! Redirecting...');
-                setTimeout(() => {
-                    window.location.href = 'dashboard.html';
-                }, 1500);
+                showSuccess('✅ Account & Device created! Redirecting...');
+                setTimeout(() => window.location.href = 'dashboard.html', 1500);
 
             } catch (err) {
-                showError(err.message);
+                showError('❌ ' + err.message);
                 btn.disabled = false;
-                btn.textContent = '≡ƒô▒ Register & Create Account';
+                btn.textContent = '📋 Create Account →';
+            }
+        }
+
+        /* ── ADD DEVICE (existing user, extra device) ── */
+        async function handleAddDevice(e) {
+            e.preventDefault();
+            const btn = document.getElementById('addDeviceBtn');
+            btn.disabled = true; btn.textContent = '⏳ Adding device...';
+            clearMessages();
+
+            const email = document.getElementById('addEmail').value.trim();
+            const password = document.getElementById('addPassword').value;
+            const deviceId = document.getElementById('addDeviceId').value.trim().toUpperCase();
+            const deviceName = document.getElementById('addDeviceName').value.trim();
+
+            // Validate Device ID format
+            if (!/^SH-\d+$/i.test(deviceId)) {
+                showError('⚠️ Device ID must be in the format SH-001, SH-002, etc.');
+                btn.disabled = false; btn.textContent = '➕ Add Device to My Account →';
+                return;
+            }
+
+            try {
+                // 1. Login to get fresh token
+                const fd = new URLSearchParams();
+                fd.append('username', email); fd.append('password', password);
+                let res = await fetch(`${API_URL}/login/access-token`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: fd
+                });
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || 'Login failed — check your credentials');
+                }
+                const { access_token } = await res.json();
+                localStorage.setItem('access_token', access_token);
+
+                // 2. Register additional device
+                res = await fetch(`${API_URL}/devices/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${access_token}`
+                    },
+                    body: JSON.stringify({ id: deviceId, name: deviceName, type: 'esp32' })
+                });
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || 'Device registration failed');
+                }
+
+                showSuccess(`✅ Device "${deviceId}" added successfully! Redirecting to dashboard...`);
+                setTimeout(() => window.location.href = 'dashboard.html', 1600);
+
+            } catch (err) {
+                showError('❌ ' + err.message);
+                btn.disabled = false;
+                btn.textContent = '➕ Add Device to My Account →';
             }
         }
     </script>

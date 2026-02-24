@@ -6,7 +6,229 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SmartHome Cloud - Admin Panel</title>
     <meta name="description" content="Admin panel for managing all SmartHome devices">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* ── Add Device Modal ─────────────────────────── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-box {
+            background: rgba(18, 20, 36, 0.92);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 20px;
+            padding: 36px 32px 28px;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04);
+            transform: translateY(20px) scale(0.97);
+            transition: transform 0.28s cubic-bezier(.22, 1, .36, 1);
+            position: relative;
+        }
+
+        .modal-overlay.open .modal-box {
+            transform: translateY(0) scale(1);
+        }
+
+        .modal-box h2 {
+            font-size: 1.35em;
+            font-weight: 700;
+            margin-bottom: 6px;
+            background: linear-gradient(135deg, #a78bfa, #38bdf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .modal-box p.modal-sub {
+            font-size: 0.82em;
+            color: rgba(255, 255, 255, 0.4);
+            margin-bottom: 28px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 14px;
+            right: 16px;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.35);
+            font-size: 1.4em;
+            cursor: pointer;
+            line-height: 1;
+            transition: color .2s;
+        }
+
+        .modal-close:hover {
+            color: #f87171;
+        }
+
+        /* ── Form Inputs ─────────────────────────── */
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.72em;
+            font-weight: 600;
+            letter-spacing: .08em;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            margin-bottom: 7px;
+        }
+
+        .form-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 12px 14px;
+            color: #f0f0f0;
+            font-size: 0.92em;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.2);
+        }
+
+        .form-input:focus {
+            border-color: rgba(139, 92, 246, 0.6);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+        }
+
+        .form-divider {
+            text-align: center;
+            font-size: 0.72em;
+            color: rgba(255, 255, 255, 0.25);
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            margin: 22px 0 18px;
+            position: relative;
+        }
+
+        .form-divider::before,
+        .form-divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 38%;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .form-divider::before {
+            left: 0;
+        }
+
+        .form-divider::after {
+            right: 0;
+        }
+
+        .btn-add-device {
+            width: 100%;
+            padding: 13px;
+            border-radius: 11px;
+            border: none;
+            background: linear-gradient(135deg, #7c3aed, #06b6d4);
+            color: #fff;
+            font-size: 0.95em;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            margin-top: 6px;
+            transition: opacity .2s, transform .15s;
+            letter-spacing: .01em;
+        }
+
+        .btn-add-device:hover {
+            opacity: .88;
+            transform: translateY(-1px);
+        }
+
+        .btn-add-device:active {
+            transform: translateY(0);
+        }
+
+        .btn-add-device:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
+        .form-msg {
+            text-align: center;
+            font-size: 0.82em;
+            margin-top: 12px;
+            min-height: 18px;
+            color: #34d399;
+        }
+
+        .form-msg.error {
+            color: #f87171;
+        }
+
+        /* ── Add Device button in header ─────────── */
+        .btn-open-modal {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 18px;
+            border-radius: 10px;
+            border: 1px solid rgba(139, 92, 246, 0.45);
+            background: rgba(139, 92, 246, 0.12);
+            color: #c4b5fd;
+            font-size: 0.85em;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: background .2s, border-color .2s, transform .15s;
+        }
+
+        .btn-open-modal:hover {
+            background: rgba(139, 92, 246, 0.25);
+            border-color: rgba(139, 92, 246, 0.7);
+            transform: translateY(-1px);
+        }
+
+        /* ── Quick-tip helper ─────────────────────── */
+        .tip-banner {
+            background: rgba(14, 165, 233, 0.08);
+            border: 1px solid rgba(14, 165, 233, 0.2);
+            border-radius: 12px;
+            padding: 14px 18px;
+            font-size: 0.82em;
+            color: rgba(255, 255, 255, 0.55);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tip-banner span.tip-icon {
+            font-size: 1.1em;
+            flex-shrink: 0;
+        }
+    </style>
 </head>
 
 <body>
@@ -15,11 +237,16 @@
         <p>Loading admin panel...</p>
     </div>
 
+    <!-- ══ Main Panel ══════════════════════════════════ -->
     <div class="dashboard" id="adminPanel" style="display:none;max-width:1100px;">
+
         <!-- Header -->
         <div class="dash-header">
-            <h1>ΓÜí Admin Panel</h1>
-            <div class="nav-links">
+            <h1>🛡️ Admin Panel</h1>
+            <div class="nav-links" style="display:flex;align-items:center;gap:12px;">
+                <button class="btn-open-modal" id="openAddDevice" onclick="openModal()">
+                    ＋ Add Device
+                </button>
                 <a href="dashboard.html" class="nav-link">Dashboard</a>
                 <a href="admin.html" class="nav-link active">Admin</a>
                 <button class="logout-btn" onclick="logout()">Logout</button>
@@ -46,31 +273,77 @@
             </div>
         </div>
 
-        <!-- Make me admin button (first time setup) -->
+        <!-- Make admin button (first time setup) -->
         <div id="makeAdminSection" style="display:none;margin-bottom:20px;">
             <div
                 style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:14px;padding:18px;text-align:center;">
-                <p style="color:var(--accent-orange);margin-bottom:10px;font-weight:600;">ΓÜá∩╕Å No admin set up yet</p>
+                <p style="color:var(--accent-orange);margin-bottom:10px;font-weight:600;">⚠️ No admin set up yet</p>
                 <p style="color:var(--text-muted);font-size:0.85em;margin-bottom:14px;">Click below to make yourself the
                     admin (first time only)</p>
-                <button class="btn btn-primary" onclick="makeAdmin()" style="max-width:250px;margin:0 auto;">≡ƒææ Make Me
+                <button class="btn btn-primary" onclick="makeAdmin()" style="max-width:250px;margin:0 auto;">🔑 Make Me
                     Admin</button>
             </div>
         </div>
 
         <!-- Access denied -->
         <div id="accessDenied" style="display:none;text-align:center;padding:60px 20px;">
-            <p style="font-size:3em;margin-bottom:10px;">≡ƒöÆ</p>
+            <p style="font-size:3em;margin-bottom:10px;">🔒</p>
             <h2 style="color:var(--accent-red);margin-bottom:10px;">Access Denied</h2>
             <p style="color:var(--text-muted);">You are not an admin. Contact the system administrator.</p>
             <a href="dashboard.html" class="btn btn-primary"
-                style="max-width:200px;display:inline-block;margin-top:20px;text-decoration:none;text-align:center;">ΓåÉ
+                style="max-width:200px;display:inline-block;margin-top:20px;text-decoration:none;text-align:center;">←
                 Back to Dashboard</a>
         </div>
 
         <!-- All Devices -->
-        <h2 style="margin-bottom:16px;font-size:1.3em;display:none;" id="devicesTitle">≡ƒô▒ All Registered Devices</h2>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;"
+            id="devicesTitleRow">
+            <h2 style="font-size:1.3em;margin:0;" id="devicesTitle">📋 All Registered Devices</h2>
+        </div>
+        <div class="tip-banner" id="tipBanner">
+            <span class="tip-icon">💡</span>
+            <span>Use the <strong>+ Add Device</strong> button in the header to register a new ESP32 device. You'll need
+                the Device ID (e.g. <code
+                    style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;">SH-001</code>) and the
+                owner's UID.</span>
+        </div>
         <div class="admin-grid" id="devicesGrid"></div>
+    </div>
+
+    <!-- ══ Add Device Modal ═══════════════════════════ -->
+    <div class="modal-overlay" id="addDeviceModal" onclick="handleOverlayClick(event)">
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeModal()" title="Close">✕</button>
+            <h2>➕ Add New Device</h2>
+            <p class="modal-sub">Register an ESP32 device to the Firebase database.</p>
+
+            <!-- Owner Section -->
+            <div class="form-group">
+                <label class="form-label" for="ownerUid">Owner UID</label>
+                <input class="form-input" type="text" id="ownerUid" placeholder="Firebase User UID (e.g. abc123xyz)">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="ownerName">Owner Display Name</label>
+                <input class="form-input" type="text" id="ownerName" placeholder="e.g. Mohammad Sakib">
+            </div>
+
+            <div class="form-divider">Device Setup</div>
+
+            <!-- Device Section -->
+            <div class="form-group">
+                <label class="form-label" for="deviceId">Device ID</label>
+                <input class="form-input" type="text" id="deviceId" placeholder="e.g. SH-001">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="deviceName">Device Name</label>
+                <input class="form-input" type="text" id="deviceName" placeholder="e.g. Living Room Hub">
+            </div>
+
+            <button class="btn-add-device" id="addDeviceBtn" onclick="addDevice()">
+                Create Device →
+            </button>
+            <div class="form-msg" id="addDeviceMsg"></div>
+        </div>
     </div>
 
     <!-- Firebase SDK -->
@@ -85,55 +358,142 @@
         requireAuth(async (user) => {
             currentUid = user.uid;
 
-            // Check if any admin exists
             const adminsSnap = await db.ref('admins').once('value');
             const adminsExist = adminsSnap.exists();
 
             if (!adminsExist) {
-                // No admin yet ΓÇö show "make me admin" button
                 document.getElementById('makeAdminSection').style.display = 'block';
                 document.getElementById('loadingOverlay').style.display = 'none';
                 document.getElementById('adminPanel').style.display = 'block';
+                ['devicesTitleRow', 'tipBanner', 'devicesGrid'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = 'none';
+                });
                 return;
             }
 
-            // Check if current user is admin
             const isAdminUser = await isAdmin(user.uid);
             if (!isAdminUser) {
                 document.getElementById('accessDenied').style.display = 'block';
+                ['devicesTitleRow', 'tipBanner', 'devicesGrid'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = 'none';
+                });
                 document.getElementById('loadingOverlay').style.display = 'none';
                 document.getElementById('adminPanel').style.display = 'block';
+                document.getElementById('openAddDevice').style.display = 'none';
                 return;
             }
 
-            // Load admin dashboard
             loadAdminData();
         });
 
+        /* ── Modal helpers ─────────────────────── */
+        function openModal() {
+            document.getElementById('addDeviceModal').classList.add('open');
+            document.getElementById('addDeviceMsg').textContent = '';
+            document.getElementById('addDeviceMsg').className = 'form-msg';
+        }
+        function closeModal() {
+            document.getElementById('addDeviceModal').classList.remove('open');
+        }
+        function handleOverlayClick(e) {
+            if (e.target === document.getElementById('addDeviceModal')) closeModal();
+        }
+
+        /* ── Add Device ────────────────────────── */
+        async function addDevice() {
+            const ownerUid = document.getElementById('ownerUid').value.trim();
+            const ownerName = document.getElementById('ownerName').value.trim();
+            const deviceId = document.getElementById('deviceId').value.trim().toUpperCase();
+            const deviceName = document.getElementById('deviceName').value.trim();
+            const msg = document.getElementById('addDeviceMsg');
+            const btn = document.getElementById('addDeviceBtn');
+
+            // Basic validation
+            if (!ownerUid || !deviceId || !deviceName) {
+                msg.className = 'form-msg error';
+                msg.textContent = '⚠️ Owner UID, Device ID and Device Name are required.';
+                return;
+            }
+            if (!/^SH-\d+$/i.test(deviceId)) {
+                msg.className = 'form-msg error';
+                msg.textContent = '⚠️ Device ID must be in format SH-001';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Creating…';
+            msg.textContent = '';
+
+            try {
+                // Check if device already exists
+                const existing = await db.ref('devices/' + deviceId).once('value');
+                if (existing.exists()) {
+                    msg.className = 'form-msg error';
+                    msg.textContent = `❌ Device "${deviceId}" already exists.`;
+                    btn.disabled = false;
+                    btn.textContent = 'Create Device →';
+                    return;
+                }
+
+                // Write device entry
+                await db.ref('devices/' + deviceId).set({
+                    name: deviceName,
+                    ownerUid: ownerUid,
+                    ownerName: ownerName || 'Unknown',
+                    online: false,
+                    lastSeen: Date.now(),
+                    relays: {
+                        relay1: { name: 'Relay 1', state: false },
+                        relay2: { name: 'Relay 2', state: false },
+                        relay3: { name: 'Relay 3', state: false },
+                        relay4: { name: 'Relay 4', state: false }
+                    }
+                });
+
+                msg.className = 'form-msg';
+                msg.textContent = `✅ Device "${deviceId}" created successfully!`;
+                // Clear fields
+                ['ownerUid', 'ownerName', 'deviceId', 'deviceName'].forEach(id => {
+                    document.getElementById(id).value = '';
+                });
+                setTimeout(closeModal, 1800);
+            } catch (err) {
+                msg.className = 'form-msg error';
+                msg.textContent = '❌ Error: ' + err.message;
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Create Device →';
+        }
+
+        /* ── Make admin ────────────────────────── */
         async function makeAdmin() {
             await db.ref('admins/' + currentUid).set(true);
             location.reload();
         }
 
-        function loadAdminData() {
-            document.getElementById('devicesTitle').style.display = 'block';
+        /* ── Toggle relay ──────────────────────── */
+        async function toggleRelay(deviceId, relayKey, currentState) {
+            await db.ref(`devices/${deviceId}/relays/${relayKey}/state`).set(!currentState);
+        }
 
-            // Real-time listener for all devices
+        /* ── Load dashboard data ───────────────── */
+        function loadAdminData() {
             db.ref('devices').on('value', (snapshot) => {
                 const devices = snapshot.val() || {};
                 const deviceIds = Object.keys(devices);
 
                 let online = 0, offline = 0;
                 deviceIds.forEach(id => {
-                    if (devices[id].online) online++;
-                    else offline++;
+                    if (devices[id].online) online++; else offline++;
                 });
 
                 document.getElementById('totalDevices').textContent = deviceIds.length;
                 document.getElementById('onlineDevices').textContent = online;
                 document.getElementById('offlineDevices').textContent = offline;
 
-                // Render device cards
                 const grid = document.getElementById('devicesGrid');
                 let html = '';
 
@@ -148,7 +508,7 @@
                         <div class="device-card-header">
                             <div>
                                 <div class="device-card-id">${id}</div>
-                                <div style="font-size:0.8em;color:var(--text-muted);">${device.ownerName || 'Unknown'}</div>
+                                <div style="font-size:0.78em;color:var(--text-muted);">${device.name || ''} · ${device.ownerName || 'Unknown'}</div>
                             </div>
                             <div style="display:flex;align-items:center;gap:6px;">
                                 <div class="status-dot ${isOnline ? 'online' : 'offline'}"></div>
@@ -173,19 +533,19 @@
                     html += `</div></div>`;
                 });
 
-                grid.innerHTML = html || '<p style="color:var(--text-muted);text-align:center;grid-column:1/-1;">No devices registered yet.</p>';
+                grid.innerHTML = html || '<p style="color:var(--text-muted);text-align:center;grid-column:1/-1;padding:40px 0;">No devices registered yet. Click <strong>+ Add Device</strong> to get started.</p>';
 
                 document.getElementById('loadingOverlay').style.display = 'none';
                 document.getElementById('adminPanel').style.display = 'block';
             });
 
-            // Count users
             db.ref('users').on('value', (snapshot) => {
                 const users = snapshot.val() || {};
                 document.getElementById('totalUsers').textContent = Object.keys(users).length;
             });
         }
 
+        /* ── Time helper ───────────────────────── */
         function getTimeAgo(timestamp) {
             const seconds = Math.floor((Date.now() - timestamp) / 1000);
             if (seconds < 60) return 'Just now';
@@ -193,6 +553,11 @@
             if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
             return Math.floor(seconds / 86400) + 'd ago';
         }
+
+        /* ── Keyboard shortcut (Escape = close modal) ── */
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') closeModal();
+        });
     </script>
 </body>
 
