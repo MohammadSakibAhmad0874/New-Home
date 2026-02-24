@@ -39,8 +39,11 @@ body {
 body::before {
   content: '';
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: 
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
     radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
     radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
     radial-gradient(circle at 50% 80%, rgba(34, 197, 94, 0.05) 0%, transparent 50%);
@@ -97,7 +100,7 @@ body::before {
 .auth-tabs {
   display: flex;
   gap: 4px;
-  background: rgba(255,255,255,0.04);
+  background: rgba(255, 255, 255, 0.04);
   border-radius: 14px;
   padding: 4px;
   margin-bottom: 30px;
@@ -123,12 +126,25 @@ body::before {
   box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
 }
 
-.auth-form { display: none; }
-.auth-form.active { display: block; animation: fadeUp 0.3s ease; }
+.auth-form {
+  display: none;
+}
+
+.auth-form.active {
+  display: block;
+  animation: fadeUp 0.3s ease;
+}
 
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .form-group {
@@ -146,7 +162,7 @@ body::before {
 .form-group input {
   width: 100%;
   padding: 14px 16px;
-  background: rgba(255,255,255,0.05);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border);
   border-radius: 12px;
   color: var(--text-primary);
@@ -303,12 +319,24 @@ body::before {
   animation: pulse 2s infinite;
 }
 
-.status-dot.online { background: var(--accent-green); }
-.status-dot.offline { background: var(--accent-red); }
+.status-dot.online {
+  background: var(--accent-green);
+}
+
+.status-dot.offline {
+  background: var(--accent-red);
+}
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
 }
 
 .device-id-label {
@@ -341,13 +369,25 @@ body::before {
   box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
 }
 
+.switch-card.switch-on {
+  border-color: rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.05);
+}
+
+.switch-status.status-on {
+  color: var(--accent-green);
+  font-weight: 600;
+}
+
 .switch-info {
   display: flex;
   align-items: center;
   gap: 14px;
 }
 
-.switch-icon { font-size: 1.8em; }
+.switch-icon {
+  font-size: 1.8em;
+}
 
 .switch-name {
   font-size: 1.15em;
@@ -376,7 +416,10 @@ body::before {
 .toggle-slider {
   position: absolute;
   cursor: pointer;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 30px;
   transition: all 0.3s;
@@ -394,12 +437,12 @@ body::before {
   transition: all 0.3s;
 }
 
-.toggle input:checked + .toggle-slider {
+.toggle input:checked+.toggle-slider {
   background: var(--accent-green);
   box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
 }
 
-.toggle input:checked + .toggle-slider::before {
+.toggle input:checked+.toggle-slider::before {
   transform: translateX(26px);
 }
 
@@ -446,7 +489,7 @@ body::before {
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
-  background: rgba(255,255,255,0.03);
+  background: rgba(255, 255, 255, 0.03);
   border-radius: 8px;
   font-size: 0.85em;
 }
@@ -531,18 +574,25 @@ body::before {
 .spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid rgba(255,255,255,0.1);
+  border: 3px solid rgba(255, 255, 255, 0.1);
   border-top-color: var(--accent-blue);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin: 40px auto;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 .loading-overlay {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: var(--bg-primary);
   display: flex;
   flex-direction: column;
@@ -558,9 +608,25 @@ body::before {
 
 /* Responsive */
 @media (max-width: 600px) {
-  .auth-card { padding: 30px 20px; }
-  .dash-header { flex-direction: column; gap: 15px; text-align: center; }
-  .dash-header h1 { font-size: 1.5em; }
-  .admin-grid { grid-template-columns: 1fr; }
-  .stats-bar { grid-template-columns: repeat(2, 1fr); }
+  .auth-card {
+    padding: 30px 20px;
+  }
+
+  .dash-header {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+
+  .dash-header h1 {
+    font-size: 1.5em;
+  }
+
+  .admin-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }

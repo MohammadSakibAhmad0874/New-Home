@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartHome - Settings</title>
+    <meta name="description" content="Manage your SmartHome account and devices">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .settings-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        .settings-section h2 {
+            font-size: 1em;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9em;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .info-label {
+            color: var(--text-muted);
+        }
+
+        .info-value {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .settings-form .form-group {
+            margin-bottom: 14px;
+        }
+
+        .settings-form label {
+            display: block;
+            color: var(--text-muted);
+            font-size: 0.8em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 6px;
+        }
+
+        .settings-form input {
+            width: 100%;
+            padding: 11px 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 0.92em;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .settings-form input:focus {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+        }
+
+        .btn-settings {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
+            font-size: 0.9em;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.15s;
+        }
+
+        .btn-settings:hover {
+            opacity: 0.85;
+            transform: translateY(-1px);
+        }
+
+        .btn-settings:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-blue {
+            background: var(--gradient-primary);
+            color: white;
+        }
+
+        .btn-red {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--accent-red);
+            border: 1px solid rgba(239, 68, 68, 0.3) !important;
+        }
+
+        .device-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .device-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .device-item-info {
+            font-size: 0.9em;
+        }
+
+        .device-item-id {
+            font-weight: 700;
+            color: var(--accent-blue);
+        }
+
+        .device-item-name {
+            color: var(--text-muted);
+            font-size: 0.85em;
+            margin-top: 2px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: rgba(30, 40, 60, 0.95);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 22px;
+            font-size: 0.9em;
+            color: var(--text-primary);
+            z-index: 9999;
+            transition: transform 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.success {
+            border-color: rgba(34, 197, 94, 0.4);
+            color: #86efac;
+        }
+
+        .toast.error {
+            border-color: rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p>Loading settings...</p>
+    </div>
+
+    <div class="dashboard" id="mainContent" style="display:none;">
+        <!-- Header -->
+        <div class="dash-header">
+            <h1>⚙️ Settings</h1>
+            <div class="nav-links">
+                <a href="dashboard.html" class="nav-link">Dashboard</a>
+                <a href="settings.html" class="nav-link active">Settings</a>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <!-- Account Info -->
+        <div class="settings-section">
+            <h2>👤 Account</h2>
+            <div class="info-row">
+                <span class="info-label">Email</span>
+                <span class="info-value" id="accountEmail">—</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Account Type</span>
+                <span class="info-value" id="accountRole">User</span>
+            </div>
+        </div>
+
+        <!-- My Devices -->
+        <div class="settings-section">
+            <h2>📟 My Devices</h2>
+            <div id="devicesList">
+                <div style="color:var(--text-muted);font-size:0.9em;">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Add New Device -->
+        <div class="settings-section">
+            <h2>➕ Add New Device</h2>
+            <form class="settings-form" onsubmit="handleAddDevice(event)">
+                <div class="form-group">
+                    <label>Device ID</label>
+                    <input type="text" id="newDeviceId" placeholder="e.g. SH-002 (must match firmware)" required>
+                </div>
+                <div class="form-group">
+                    <label>Device Name</label>
+                    <input type="text" id="newDeviceName" placeholder="e.g. Bedroom Hub" required>
+                </div>
+                <button type="submit" class="btn-settings btn-blue" id="addDeviceBtn">Add Device</button>
+            </form>
+        </div>
+
+        <!-- Change Password -->
+        <div class="settings-section">
+            <h2>🔒 Change Password</h2>
+            <form class="settings-form" onsubmit="handleChangePassword(event)">
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" id="newPassword" placeholder="Min 6 characters" minlength="6" required>
+                </div>
+                <div class="form-group">
+                    <label>Confirm New Password</label>
+                    <input type="password" id="confirmPassword" placeholder="Repeat new password" required>
+                </div>
+                <button type="submit" class="btn-settings btn-blue" id="changePassBtn">Update Password</button>
+            </form>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="settings-section">
+            <h2>⚠️ Session</h2>
+            <button class="btn-settings btn-red" onclick="logout()">Sign Out of All Devices</button>
+        </div>
+    </div>
+
+    <!-- Toast notification -->
+    <div class="toast" id="toast"></div>
+
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+    <script>
+        const token = localStorage.getItem('access_token');
+        if (!token) window.location.href = 'index.html';
+
+        let currentUser = null;
+
+        async function initSettings() {
+            try {
+                // Load user info
+                const userRes = await fetch(`${API_URL}/users/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!userRes.ok) throw new Error('Auth failed');
+                currentUser = await userRes.json();
+
+                document.getElementById('accountEmail').textContent = currentUser.email;
+                document.getElementById('accountRole').textContent = currentUser.is_superuser ? 'Admin' : 'User';
+
+                // Load devices
+                const devRes = await fetch(`${API_URL}/devices/`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const devices = await devRes.json();
+                renderDevices(devices);
+
+                document.getElementById('loadingOverlay').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+
+            } catch (err) {
+                console.error(err);
+                if (err.message === 'Auth failed') logout();
+            }
+        }
+
+        function renderDevices(devices) {
+            const list = document.getElementById('devicesList');
+            if (!devices || devices.length === 0) {
+                list.innerHTML = '<div style="color:var(--text-muted);font-size:0.9em;">No devices registered yet.</div>';
+                return;
+            }
+            list.innerHTML = devices.map(d => `
+                <div class="device-item">
+                    <div class="device-item-info">
+                        <div class="device-item-id">📟 ${d.id}</div>
+                        <div class="device-item-name">${d.name || 'Unnamed Device'}</div>
+                    </div>
+                    <span style="font-size:0.75em;padding:3px 10px;background:rgba(59,130,246,0.1);color:var(--accent-blue);border-radius:6px;">${d.type || 'esp32'}</span>
+                </div>
+            `).join('');
+        }
+
+        async function handleAddDevice(e) {
+            e.preventDefault();
+            const btn = document.getElementById('addDeviceBtn');
+            btn.disabled = true;
+            btn.textContent = 'Adding...';
+
+            const deviceId = document.getElementById('newDeviceId').value.trim().toUpperCase();
+            const deviceName = document.getElementById('newDeviceName').value.trim();
+
+            if (!/^SH-\d+$/i.test(deviceId)) {
+                showToast('Device ID must be in format SH-001, SH-002, etc.', 'error');
+                btn.disabled = false;
+                btn.textContent = 'Add Device';
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/devices/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ id: deviceId, name: deviceName, type: 'esp32' })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || 'Failed to add device');
+                }
+
+                showToast(`✅ Device ${deviceId} added!`, 'success');
+                document.getElementById('newDeviceId').value = '';
+                document.getElementById('newDeviceName').value = '';
+
+                // Refresh device list
+                const devRes = await fetch(`${API_URL}/devices/`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                renderDevices(await devRes.json());
+
+            } catch (err) {
+                showToast('❌ ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Add Device';
+            }
+        }
+
+        async function handleChangePassword(e) {
+            e.preventDefault();
+            const btn = document.getElementById('changePassBtn');
+            const newPass = document.getElementById('newPassword').value;
+            const confirmPass = document.getElementById('confirmPassword').value;
+
+            if (newPass !== confirmPass) {
+                showToast('❌ Passwords do not match', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Updating...';
+
+            try {
+                const res = await fetch(`${API_URL}/users/me`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ password: newPass })
+                });
+
+                if (!res.ok) {
+                    // Try PUT if PATCH not supported
+                    const res2 = await fetch(`${API_URL}/users/me/password`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ password: newPass })
+                    });
+                    if (!res2.ok) throw new Error('Password update failed. This feature may not be supported yet.');
+                }
+
+                showToast('✅ Password updated!', 'success');
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+
+            } catch (err) {
+                showToast('❌ ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Update Password';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('access_token');
+            window.location.href = 'index.html';
+        }
+
+        function showToast(message, type = '') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => {
+                toast.className = `toast ${type}`;
+            }, 3000);
+        }
+
+        initSettings();
+    </script>
+</body>
+
+</html>

@@ -4,8 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartHome Cloud - Dashboard</title>
+    <title>SmartHome - Dashboard</title>
     <meta name="description" content="Control your ESP32 Smart Home switches from anywhere">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -13,27 +15,25 @@
     <!-- Loading overlay -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="spinner"></div>
-        <p>Loading your devices...</p>
+        <p>Loading devices...</p>
     </div>
 
     <div class="dashboard" id="mainDashboard" style="display:none;">
         <!-- Header -->
         <div class="dash-header">
-            <div>
-                <h1>≡ƒÅá SmartHome</h1>
-            </div>
+            <h1>🏠 SmartHome</h1>
             <div class="nav-links">
                 <a href="dashboard.html" class="nav-link active">Dashboard</a>
-                <!-- Admin link removed for now until implemented in backend -->
+                <a href="settings.html" class="nav-link">Settings</a>
                 <button class="logout-btn" onclick="logout()">Logout</button>
             </div>
         </div>
 
         <!-- User info -->
         <div class="user-badge" style="margin-bottom:16px;">
-            <span>≡ƒæñ <span id="userName">User</span></span>
+            <span>👤 <span id="userName">User</span></span>
             <span style="color:var(--text-muted);">|</span>
-            <span>≡ƒô▒ Device: <strong id="userDeviceId">ΓÇö</strong></span>
+            <span>📟 Device: <strong id="userDeviceId">—</strong></span>
         </div>
 
         <!-- Device status -->
@@ -51,10 +51,10 @@
         <!-- ESP32 Setup Info -->
         <div
             style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-top:10px;">
-            <h3 style="margin-bottom:12px;font-size:1em;color:var(--text-secondary);">≡ƒôí ESP32 Setup</h3>
+            <h3 style="margin-bottom:12px;font-size:1em;color:var(--text-secondary);">⚙️ ESP32 Setup</h3>
             <p style="color:var(--text-muted);font-size:0.85em;line-height:1.6;">
-                Your ESP32 must be connected to WiFi and configured with Device ID: <strong id="setupDeviceId"
-                    style="color:var(--accent-blue);"></strong><br>
+                Your ESP32 must be connected to WiFi and configured with Device ID:
+                <strong id="setupDeviceId" style="color:var(--accent-blue);"></strong><br>
                 Update <code
                     style="background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px;">config.h</code> and
                 <code
@@ -68,7 +68,8 @@
     <script src="config.js"></script>
     <script src="app.js"></script>
     <script>
-        const switchIcons = ['≡ƒÆí', '≡ƒ¢Å∩╕Å', '≡ƒì│', '≡ƒîÇ', '≡ƒÆí', '≡ƒÆí', '≡ƒÆí', '≡ƒÆí'];
+        // Icon map using simple emoji — works on all Android browsers
+        const switchIcons = ['💡', '🛏️', '🍳', '🌀', '🔌', '💡', '🔌', '🔌'];
         let currentDevice = null;
         let ws = null;
         const token = localStorage.getItem('access_token');
@@ -77,7 +78,6 @@
             window.location.href = 'index.html';
         }
 
-        // Initialize Dashboard
         initDashboard();
 
         async function initDashboard() {
@@ -88,7 +88,7 @@
                 });
                 if (!userRes.ok) throw new Error('Auth failed');
                 const user = await userRes.json();
-                document.getElementById('userName').textContent = user.email; // or name if we add it to model
+                document.getElementById('userName').textContent = user.email;
 
                 // 2. Get Devices
                 const devRes = await fetch(`${API_URL}/devices/`, {
@@ -97,19 +97,17 @@
                 const devices = await devRes.json();
 
                 if (devices.length === 0) {
-                    showError("No devices found. Please register one.");
+                    showError('No devices found. Please add one in Settings.');
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                    document.getElementById('mainDashboard').style.display = 'block';
                     return;
                 }
 
-                // For now, take the first device
                 currentDevice = devices[0];
                 document.getElementById('userDeviceId').textContent = currentDevice.id;
                 document.getElementById('setupDeviceId').textContent = currentDevice.id;
 
-                // Render initial state
                 renderDevice(currentDevice);
-
-                // 3. Connect WebSocket
                 connectWebSocket(currentDevice.id);
 
                 document.getElementById('loadingOverlay').style.display = 'none';
@@ -118,7 +116,8 @@
             } catch (err) {
                 console.error(err);
                 if (err.message === 'Auth failed') logout();
-                alert("Error loading dashboard: " + err.message);
+                document.getElementById('loadingOverlay').style.display = 'none';
+                document.getElementById('mainDashboard').style.display = 'block';
             }
         }
 
@@ -126,15 +125,13 @@
             ws = new WebSocket(`${WS_URL}/${deviceId}`);
 
             ws.onopen = () => {
-                console.log("WS Connected");
+                console.log('WS Connected');
                 updateStatus(true);
             };
 
             ws.onmessage = (event) => {
                 const msg = JSON.parse(event.data);
                 if (msg.type === 'update') {
-                    console.log("Update received:", msg.data);
-                    // Merge update into current state
                     if (!currentDevice.start_state) currentDevice.start_state = {};
                     Object.assign(currentDevice.start_state, msg.data);
                     renderDevice(currentDevice);
@@ -142,9 +139,8 @@
             };
 
             ws.onclose = () => {
-                console.log("WS Disconnected");
+                console.log('WS Disconnected');
                 updateStatus(false);
-                // Reconnect after 3s
                 setTimeout(() => connectWebSocket(deviceId), 3000);
             };
         }
@@ -154,11 +150,11 @@
             const txt = document.getElementById('statusText');
             if (online) {
                 dot.className = 'status-dot online';
-                txt.textContent = 'ESP32 Online (WS)'; // "WS Connected" really, backend is online
+                txt.textContent = 'ESP32 Connected';
                 txt.style.color = 'var(--accent-green)';
             } else {
                 dot.className = 'status-dot offline';
-                txt.textContent = 'Disconnecting...';
+                txt.textContent = 'Disconnected (reconnecting...)';
                 txt.style.color = 'var(--accent-red)';
             }
         }
@@ -167,34 +163,31 @@
             const grid = document.getElementById('controlsGrid');
             const relays = device.start_state || {};
 
-            // Default if empty
             if (Object.keys(relays).length === 0) {
-                // Assume 4 relays for simulation if empty
-                relays.relay1 = { state: false, name: "Living Room" };
-                relays.relay2 = { state: false, name: "Bedroom" };
-                relays.relay3 = { state: false, name: "Kitchen" };
-                relays.relay4 = { state: false, name: "Fan" };
+                relays.relay1 = { state: false, name: 'Living Room' };
+                relays.relay2 = { state: false, name: 'Bedroom' };
+                relays.relay3 = { state: false, name: 'Kitchen' };
+                relays.relay4 = { state: false, name: 'Fan' };
             }
 
             let html = '';
-            // Sort keys to keep order
             Object.keys(relays).sort().forEach((key, idx) => {
                 const relay = relays[key];
                 const isOn = relay.state === true;
                 const name = relay.name || 'Switch ' + (idx + 1);
-                const icon = switchIcons[idx] || '≡ƒÆí';
+                const icon = switchIcons[idx] || '🔌';
 
                 html += `
-                <div class="switch-card" onclick="toggleRelay('${device.id}', '${key}', ${isOn})">
+                <div class="switch-card ${isOn ? 'switch-on' : ''}" onclick="toggleRelay('${device.id}', '${key}', ${isOn})">
                     <div class="switch-info">
                         <span class="switch-icon">${icon}</span>
                         <div>
                             <div class="switch-name">${name}</div>
-                            <div class="switch-status">${isOn ? '≡ƒƒó ON' : 'ΓÜ½ OFF'}</div>
+                            <div class="switch-status ${isOn ? 'status-on' : ''}">${isOn ? '⚡ ON' : 'OFF'}</div>
                         </div>
                     </div>
                     <label class="toggle" onclick="event.stopPropagation()">
-                        <input type="checkbox" ${isOn ? 'checked' : ''} 
+                        <input type="checkbox" ${isOn ? 'checked' : ''}
                                onchange="toggleRelay('${device.id}', '${key}', ${isOn})">
                         <span class="toggle-slider"></span>
                     </label>
@@ -206,43 +199,29 @@
 
         async function toggleRelay(deviceId, key, currentState) {
             const newState = !currentState;
-            // Optimistic update
             if (currentDevice.start_state && currentDevice.start_state[key]) {
                 currentDevice.start_state[key].state = newState;
                 renderDevice(currentDevice);
             }
 
-            // Send to Backend via REST (could use WS too, but REST ensures persistence confirm)
-            // Or use WS for speed: ws.send(JSON.stringify({type: 'command', data: {[key]: {state: newState}}}))
-
-            // Let's use REST API
             try {
                 const update = {};
                 update[key] = { state: newState };
-
-                // Assuming we want to keep names if they exist, but backend merge handles it.
-                // Just send state change.
 
                 await fetch(`${API_URL}/devices/${deviceId}/state`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
-                        // 'Authorization': `Bearer ${token}` // Endpoint currently unprotected or needs auth? 
-                        // Implementation plan said "current_user" commented out. 
-                        // But wait, "Phase 1" code had current_user commented out. 
-                        // To be safe, let's include header, if backend ignores it, fine.
                         'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify(update)
                 });
             } catch (e) {
-                console.error("Toggle failed", e);
-                // Revert optimistic update
+                console.error('Toggle failed', e);
                 if (currentDevice.start_state && currentDevice.start_state[key]) {
                     currentDevice.start_state[key].state = currentState;
                     renderDevice(currentDevice);
                 }
-                alert("Failed to toggle switch");
             }
         }
 
@@ -251,6 +230,10 @@
             window.location.href = 'index.html';
         }
 
+        function showError(msg) {
+            const grid = document.getElementById('controlsGrid');
+            grid.innerHTML = `<div style="padding:20px;text-align:center;color:var(--accent-red);">⚠️ ${msg}</div>`;
+        }
     </script>
 </body>
 
