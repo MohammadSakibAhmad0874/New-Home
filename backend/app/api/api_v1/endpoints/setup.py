@@ -5,7 +5,7 @@ This endpoint is protected by a secret token.
 """
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, delete
 
 from db.session import get_db
 from db.models import User
@@ -34,7 +34,6 @@ async def create_admin(secret: str, db: AsyncSession = Depends(get_db)):
     hashed = get_password_hash(ADMIN_PASSWORD)
 
     if user:
-        # Update existing user
         user.hashed_password = hashed
         user.is_superuser    = True
         user.is_active       = True
@@ -47,7 +46,6 @@ async def create_admin(secret: str, db: AsyncSession = Depends(get_db)):
             "message": "Admin password reset. You can now login at /admin.html"
         }
     else:
-        # Create new admin user
         new_user = User(
             email=ADMIN_EMAIL,
             hashed_password=hashed,
@@ -62,3 +60,38 @@ async def create_admin(secret: str, db: AsyncSession = Depends(get_db)):
             "is_superuser": True,
             "message": "Admin created. You can now login at /admin.html"
         }
+
+
+@router.get("/delete-users")
+async def delete_users(secret: str, ids: str, db: AsyncSession = Depends(get_db)):
+    """
+    One-time endpoint to delete users by ID.
+    Call: GET /api/v1/setup/delete-users?secret=homecontrol_setup_2024&ids=1,5
+    ids = comma-separated user IDs to delete.
+    """
+    if secret != SETUP_SECRET:
+        raise HTTPException(status_code=403, detail="Invalid secret")
+
+    try:
+        id_list = [int(i.strip()) for i in ids.split(",") if i.strip().isdigit()]
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid ids format. Use: ids=1,5")
+
+    if not id_list:
+        raise HTTPException(status_code=400, detail="No valid IDs provided")
+
+    deleted = []
+    for uid in id_list:
+        result = await db.execute(select(User).where(User.id == uid))
+        user = result.scalars().first()
+        if user:
+            deleted.append({"id": user.id, "email": user.email})
+            await db.delete(user)
+
+    await db.commit()
+    return {
+        "status": "done",
+        "deleted": deleted,
+        "count": len(deleted),
+        "message": f"Deleted {len(deleted)} user(s). You can remove this endpoint now."
+    }
