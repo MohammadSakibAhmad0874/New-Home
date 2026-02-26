@@ -25,6 +25,8 @@ async def websocket_endpoint(
     Secure: Requires either 'token' (User) or 'api_key' (Device).
     Device can also use 'Authorization' header.
     """
+    print(f"🔌 WS connect attempt → device_id={device_id} | api_key={'SET' if api_key else 'NONE'} | token={'SET' if token else 'NONE'}")
+
     # 1. Authenticate
     is_device = False
     
@@ -42,29 +44,33 @@ async def websocket_endpoint(
         # Validate Device Key
         result = await db.execute(select(Device).filter(Device.api_key == api_key))
         device = result.scalars().first()
-        if not device or device.id != device_id:
+        if not device:
+            print(f"❌ WS REJECTED: No device found with api_key={api_key[:10]}... (device not registered in DB?)")
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+            return
+        if device.id != device_id:
+            print(f"❌ WS REJECTED: api_key belongs to device '{device.id}' but requested device_id='{device_id}'")
             await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
             return
         is_device = True
+        print(f"✅ WS AUTH OK: Device '{device_id}' authenticated via api_key")
         
     elif token:
         # Validate User Token
         try:
-            # We can reuse the dependency logic manually
-            # But get_current_user is async and takes Depends... 
-            # Easier to just replicate the decode logic or call a helper
             from jose import jwt
             from core.config import settings
             
             payload = jwt.decode(
                 token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
             )
-            # Valid token
-        except Exception:
-             await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-             return
+            print(f"✅ WS AUTH OK: User authenticated via token for device_id={device_id}")
+        except Exception as e:
+            print(f"❌ WS REJECTED: Invalid token for device_id={device_id} → {e}")
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+            return
     else:
-        # No auth
+        print(f"❌ WS REJECTED: No api_key or token provided for device_id={device_id}")
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
 

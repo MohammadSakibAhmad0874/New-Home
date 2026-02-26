@@ -172,3 +172,90 @@ async def create_device(
         "owner_id": device.owner_id,
         "message": "Device registered! Copy the api_key into your config.h"
     }
+
+
+@router.get("/force-register-device")
+async def force_register_device(
+    secret: str,
+    device_id: str,
+    owner_id: int,
+    api_key: str,
+    name: str = "ESP32 Device",
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Force-register a device with an EXACT api_key (for firmware-hardcoded keys).
+    If device already exists, updates the api_key.
+    Call: GET /api/v1/setup/force-register-device?secret=homecontrol_setup_2024
+               &device_id=SH-004&owner_id=1&api_key=YOUR_KEY&name=SH-004+Device
+    """
+    if secret != SETUP_SECRET:
+        raise HTTPException(status_code=403, detail="Invalid secret")
+
+    from db.models import Device
+
+    result = await db.execute(select(Device).where(Device.id == device_id))
+    existing = result.scalars().first()
+    if existing:
+        # Update the api_key to match what firmware has
+        old_key = existing.api_key
+        existing.api_key = api_key
+        existing.name = name
+        db.add(existing)
+        await db.commit()
+        return {
+            "status": "updated",
+            "device_id": existing.id,
+            "api_key": api_key,
+            "old_api_key": old_key,
+            "message": "Device api_key updated to match firmware. Reconnect ESP32 now."
+        }
+
+    device = Device(
+        id=device_id,
+        owner_id=owner_id,
+        name=name,
+        type="esp32",
+        api_key=api_key,
+        online=False,
+    )
+    db.add(device)
+    await db.commit()
+    await db.refresh(device)
+
+    return {
+        "status": "created",
+        "device_id": device.id,
+        "api_key": device.api_key,
+        "name": device.name,
+        "owner_id": device.owner_id,
+        "message": "Device registered with exact firmware api_key!"
+    }
+
+
+@router.get("/list-devices")
+async def list_devices(secret: str, db: AsyncSession = Depends(get_db)):
+    """
+    List all registered devices and their api_keys.
+    Call: GET /api/v1/setup/list-devices?secret=homecontrol_setup_2024
+    """
+    if secret != SETUP_SECRET:
+        raise HTTPException(status_code=403, detail="Invalid secret")
+
+    from db.models import Device
+    result = await db.execute(select(Device))
+    devices = result.scalars().all()
+    return {
+        "count": len(devices),
+        "devices": [
+            {
+                "id": d.id,
+                "name": d.name,
+                "owner_id": d.owner_id,
+                "api_key": d.api_key,
+                "online": d.online,
+                "last_seen": str(d.last_seen),
+            }
+            for d in devices
+        ]
+    }
