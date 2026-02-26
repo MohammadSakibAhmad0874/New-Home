@@ -53,10 +53,14 @@ async def on_startup():
         else:
             print(f"❌ DB Init Failed: {e}")
 
-    # ── Safe column migrations (ADD IF NOT EXISTS) ──────────────────────────
+    # ── Safe column migrations (ADD/DROP IF EXISTS) ─────────────────────────
     # These are idempotent — safe to run on every startup.
     migrations = [
+        # Add new columns
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS full_name VARCHAR;",
+        # Drop stale sensor columns removed in temperature-sensor cleanup
+        "ALTER TABLE devices DROP COLUMN IF EXISTS temperature;",
+        "ALTER TABLE devices DROP COLUMN IF EXISTS humidity;",
     ]
     try:
         async with engine.begin() as conn:
@@ -68,9 +72,10 @@ async def on_startup():
         
     # Start Schedulers
     import asyncio
-    from core.scheduler import check_schedules, check_device_online_status
+    from core.scheduler import check_schedules, check_device_online_status, keep_alive_ping
     asyncio.create_task(check_schedules())
     asyncio.create_task(check_device_online_status())
+    asyncio.create_task(keep_alive_ping())
     print("✅ Background schedulers started.")
 
 # ─── Health Endpoints ─────────────────────────────────────────────────────────
