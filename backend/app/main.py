@@ -45,7 +45,13 @@ async def on_startup():
             await conn.run_sync(Base.metadata.create_all)
         print("✅ Database tables created.")
     except Exception as e:
-        print(f"❌ DB Init Failed: {e}")
+        err = str(e)
+        if "getaddrinfo" in err or "could not translate" in err:
+            print(f"❌ DB Init Failed: Cannot reach database host.")
+            print(f"   ➡️  Is DATABASE_URL set correctly in backend/.env?")
+            print(f"   ➡️  For local dev: copy External URL from Render → homecontrol-db → Connect")
+        else:
+            print(f"❌ DB Init Failed: {e}")
 
     # ── Safe column migrations (ADD IF NOT EXISTS) ──────────────────────────
     # These are idempotent — safe to run on every startup.
@@ -65,6 +71,7 @@ async def on_startup():
     from core.scheduler import check_schedules, check_device_online_status
     asyncio.create_task(check_schedules())
     asyncio.create_task(check_device_online_status())
+    print("✅ Background schedulers started.")
 
 # ─── Health Endpoints ─────────────────────────────────────────────────────────
 

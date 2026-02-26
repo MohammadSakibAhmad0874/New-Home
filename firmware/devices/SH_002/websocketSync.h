@@ -8,6 +8,7 @@
 
 #include <ArduinoWebsockets.h> // Library: ArduinoWebsockets by Gil Maimon
 #include <ArduinoJson.h>
+#include <WiFiClientSecure.h>  // Required for wss:// with setInsecure()
 
 using namespace websockets;
 
@@ -20,8 +21,12 @@ WebsocketsClient client;
 bool isConnected = false;
 unsigned long lastPingTime = 0;
 unsigned long lastReconnectAttempt = 0;
-const unsigned long PING_INTERVAL = 25000;      // 25s heartbeat
-const unsigned long RECONNECT_INTERVAL = 10000; // retry every 10s if disconnected
+unsigned long reconnectInterval = 5000;          // starts at 5s, backs off slowly
+int reconnectAttempts = 0;                       // track consecutive failures
+const unsigned long PING_INTERVAL    = 25000;    // 25s heartbeat
+const unsigned long MIN_RECONNECT    = 5000;     // minimum 5s between retries
+const unsigned long MAX_RECONNECT    = 60000;    // cap at 60s (Render cold start)
+const int BACKOFF_AFTER_ATTEMPTS     = 3;        // only start backing off after N failures
 
 // Forward declarations
 void sendStateUpdate();
@@ -89,6 +94,8 @@ void onMessageCallback(WebsocketsMessage message) {
 void onEventsCallback(WebsocketsEvent event, String data) {
     if (event == WebsocketsEvent::ConnectionOpened) {
         isConnected = true;
+        reconnectInterval = MIN_RECONNECT; // reset backoff on success
+        reconnectAttempts = 0;             // reset attempt counter
         #if ENABLE_SERIAL_DEBUG
         Serial.println("✅ WS Connected!");
         #endif
@@ -97,7 +104,7 @@ void onEventsCallback(WebsocketsEvent event, String data) {
     } else if (event == WebsocketsEvent::ConnectionClosed) {
         isConnected = false;
         #if ENABLE_SERIAL_DEBUG
-        Serial.println("❌ WS Disconnected");
+        Serial.println("❌ WS Disconnected. Will retry...");
         #endif
     } else if (event == WebsocketsEvent::GotPing) {
         client.pong();
@@ -111,19 +118,30 @@ void initWebSocket() {
     client.onMessage(onMessageCallback);
     client.onEvent(onEventsCallback);
     
-    // Connect
+    // CRITICAL: Skip SSL cert verification for wss:// connections.
+    // Without this, TLS handshake fails silently on ESP32 (no root CA loaded).
+    // Use a proper root CA cert in production for security.
+    if (BACKEND_SECURE) {
+        client.setInsecure();
+    }
+
     // Construct URL with Auth
     String protocol = BACKEND_SECURE ? "wss://" : "ws://";
     String portStr = (BACKEND_PORT == 80 || BACKEND_PORT == 443) ? "" : ":" + String(BACKEND_PORT);
     String url = protocol + String(BACKEND_HOST) + portStr + "/api/v1/ws/" + String(DEVICE_ID) + "?api_key=" + String(DEVICE_API_KEY);
     
     #if ENABLE_SERIAL_DEBUG
-    Serial.print("Connecting to: ");
+    Serial.print("🔌 WS Connecting to: ");
     Serial.println(url);
     #endif
     
-    // Note: ArduinoWebsockets client.connect() handles the protocol prefix
-    client.connect(url);
+    bool ok = client.connect(url);
+    
+    #if ENABLE_SERIAL_DEBUG
+    if (!ok) {
+        Serial.println("⚠️  WS connect() returned false — server may be sleeping (Render cold start), retrying...");
+    }
+    #endif
 }
 
 void sendHeartbeat() {
@@ -162,13 +180,31 @@ void cloudSyncLoop() {
     client.poll(); // Must always poll even if reconnecting
 
     if (!isConnected) {
-        // Auto-reconnect with throttle
-        if (millis() - lastReconnectAttempt > RECONNECT_INTERVAL) {
-            lastReconnectAttempt = millis();
+        // Auto-reconnect with Render.com cold-start friendly backoff.
+        // We retry quickly at first (5s x3) to catch the server waking up,
+        // then slowly back off up to 60s to avoid hammering a sleeping server.
+        if (millis() - lastReconnectAttempt > reconnectInterval) {
+            lastReconnectAttempt = millis(); // reset BEFORE connect so timing is clean
+            reconnectAttempts++;
+
+            // Calculate NEXT interval before connecting
+            unsigned long nextInterval;
+            if (reconnectAttempts < BACKOFF_AFTER_ATTEMPTS) {
+                nextInterval = MIN_RECONNECT; // stay at 5s during wake-up window
+            } else {
+                nextInterval = min(reconnectInterval * 2, MAX_RECONNECT);
+            }
+
             #if ENABLE_SERIAL_DEBUG
-            Serial.println("🔄 WS reconnecting...");
+            Serial.print("🔄 WS reconnecting (attempt ");
+            Serial.print(reconnectAttempts);
+            Serial.print(", next retry in ");
+            Serial.print(nextInterval / 1000);
+            Serial.println("s)...");
             #endif
+
             initWebSocket();
+            reconnectInterval = nextInterval;
         }
         return;
     }

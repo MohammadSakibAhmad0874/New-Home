@@ -3,10 +3,22 @@ __pycache__/
 *.py[cod]
 *$py.class
 venv/
+.venv/
 .env
+backend/.env
+*.env
 
 # Docker
 .pytest_cache/
+
+# Logs
+*.log
+app_logs.txt
+app.log
+
+# IDE
+.vscode/
+.idea/
 
 # OS
 Thumbs.db
