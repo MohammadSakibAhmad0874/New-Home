@@ -77,12 +77,18 @@ async def websocket_endpoint(
                 message = json.loads(data)
                 msg_type = message.get("type")
                 
-                # 1. Heartbeat from Device
+                # 1. Heartbeat from Device — update DB to keep device marked as online
                 if msg_type == "heartbeat":
-                     # Update last_seen in DB (optimize: maybe not every heartbeat to save DB writes)
-                     # For now, let's just log it or update memory if we had an in-memory state.
-                     # We can spawn a background task to update DB to avoid blocking WS loop.
-                     pass 
+                    try:
+                        result = await db.execute(select(Device).filter(Device.id == device_id))
+                        dev = result.scalars().first()
+                        if dev:
+                            dev.last_seen = datetime.utcnow()
+                            dev.online = True
+                            db.add(dev)
+                            await db.commit()
+                    except Exception:
+                        pass  # Non-fatal — don't kill the WS connection over a heartbeat update failure
                 
                 # 2. State Update from Device (Physical switch toggle)
                 elif msg_type == "state_update":

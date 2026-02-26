@@ -32,6 +32,8 @@ class Device(Base):
     # Store relay state as JSON: {"relay1": {"state": true}, ...}
     start_state = Column(JSON, default={})
     
+    owner = relationship("User", back_populates="devices")
+
 
 class Firmware(Base):
     __tablename__ = "firmware"
@@ -57,5 +59,3 @@ class Schedule(Base):
 
     device = relationship("Device")
 
-# Update Device relationships
-Device.owner = relationship("User", back_populates="devices")

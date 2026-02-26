@@ -32,8 +32,8 @@ async def check_schedules():
                         db, 
                         schedule.device_id, 
                         schedule.relay_key, 
-                        schedule.action, 
-                        user_id=None # handled safely in updated _update_relay_state
+                        schedule.action
+                        # current_user=None by default — system action, no user auth needed
                     )
                 except Exception as e:
                     print(f"❌ Schedule Error: {e}")
