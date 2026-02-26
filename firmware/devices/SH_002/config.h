@@ -65,11 +65,6 @@ const unsigned long WIFI_TIMEOUT = 20000;  // 20 seconds
 // Change the hostname below to customize the URL
 const char* MDNS_HOSTNAME = "smarthome";  // → http://smarthome.local
 
-// ============= Sensor Configuration =============
-// DHT11 or DHT22 Temperature/Humidity Sensor
-#define ENABLE_DHT true
-const int DHT_PIN = 4;
-#define DHT_TYPE DHT11 // Set to DHT22 if using that version
 
 // ============= Switch Names (for web interface) =============
 const char* SWITCH_1_NAME = "Living Room";

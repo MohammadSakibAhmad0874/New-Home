@@ -158,8 +158,6 @@ void setup() {
   // Initialize relay control
   initRelays();
   
-  // Init Sensor
-  dht.begin();
   
   // WiFi Setup with captive portal
   #if ENABLE_CAPTIVE_PORTAL
@@ -217,11 +215,6 @@ void setup() {
 /*
  * Main Loop - Runs continuously
  */
-#include <DHT.h>
-
-DHT dht(DHT_PIN, DHT_TYPE);
-unsigned long lastSensorRead = 0;
-const long SENSOR_INTERVAL = 30000; // 30 seconds
 
 void loop() {
   // Handle web server requests
@@ -233,30 +226,6 @@ void loop() {
   // WebSocket cloud sync (poll for remote commands)
   cloudSyncLoop();
   
-  // Sensor Read Loop
-  if (millis() - lastSensorRead > SENSOR_INTERVAL) {
-      lastSensorRead = millis();
-      // Read DHT
-      float h = dht.readHumidity();
-      float t = dht.readTemperature(); // Celsius
-      
-      #if ENABLE_SERIAL_DEBUG
-      if (isnan(h) || isnan(t)) {
-        Serial.println(F("Failed to read from DHT sensor!"));
-      } else {
-        Serial.print(F("Humidity: "));
-        Serial.print(h);
-        Serial.print(F("%  Temperature: "));
-        Serial.print(t);
-        Serial.println(F("°C"));
-      }
-      #endif
-
-      // Send sensor data once (not twice)
-      if (!isnan(h) && !isnan(t)) {
-         sendSensorData(t, h);
-      }
-  }
   
   // Check WiFi connection (reconnect if lost)
   if (!portalActive && wifiConnected && WiFi.status() != WL_CONNECTED) {

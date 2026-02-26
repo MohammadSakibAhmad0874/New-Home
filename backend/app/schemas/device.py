@@ -7,8 +7,6 @@ class DeviceBase(BaseModel):
     id: str
     name: Optional[str] = None
     type: Optional[str] = "esp32"
-    temperature: Optional[float] = None
-    humidity: Optional[float] = None
 
 class DeviceCreate(DeviceBase):
     id: str # User must provide the unique ID (e.g. SH-001)

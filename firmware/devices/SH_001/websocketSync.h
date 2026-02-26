@@ -153,24 +153,6 @@ void sendStateUpdate() {
     client.send(jsonString);
 }
 
-void sendSensorData(float temperature, float humidity) {
-    if (!isConnected) return;
-    
-    StaticJsonDocument<256> doc;
-    doc["type"] = "sensor_update";
-
-    JsonObject data = doc.createNestedObject("data");
-    // Send null (not string "null") for NaN readings
-    if (isnan(temperature)) data["temperature"] = nullptr;
-    else data["temperature"] = temperature;
-
-    if (isnan(humidity)) data["humidity"] = nullptr;
-    else data["humidity"] = humidity;
-
-    String jsonString;
-    serializeJson(doc, jsonString);
-    client.send(jsonString);
-}
 
 
 // Call this in loop()

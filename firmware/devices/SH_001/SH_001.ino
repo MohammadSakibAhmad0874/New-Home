@@ -17,11 +17,11 @@
 #include <WiFi.h>
 #include <WebServer.h>
 #include <DNSServer.h>
-#include <DHT.h>
 #include <HTTPUpdate.h>
 
-// ESP32 Arduino Core v3.x renamed httpUpdate → ESPhttpUpdate
-#if defined(ESP_ARDUINO_VERSION_MAJOR) && ESP_ARDUINO_VERSION_MAJOR >= 3
+// ESP32 Arduino Core v3.x renamed ESPhttpUpdate → httpUpdate
+// On v2.x, alias the old name to the new one so the rest of the code is uniform
+#if !defined(ESP_ARDUINO_VERSION_MAJOR) || ESP_ARDUINO_VERSION_MAJOR < 3
   #define httpUpdate ESPhttpUpdate
 #endif
 #include <HTTPClient.h>
@@ -36,10 +36,7 @@
 // #include "firebaseSync.h"
 #include "websocketSync.h" // Requires ArduinoWebsockets library
 
-// DHT Sensor
-DHT dht(DHT_PIN, DHT_TYPE);
-unsigned long lastSensorRead = 0;
-const long SENSOR_INTERVAL = 30000; // 30 seconds
+
 
 WebServer server(WEB_SERVER_PORT);
 
@@ -169,8 +166,6 @@ void setup() {
   // Initialize relay control
   initRelays();
   
-  // Init Sensor
-  dht.begin();
   
   // WiFi Setup with captive portal
   #if ENABLE_CAPTIVE_PORTAL
@@ -240,30 +235,6 @@ void loop() {
   // WebSocket cloud sync (poll for remote commands)
   cloudSyncLoop();
   
-  // Sensor Read Loop
-  if (millis() - lastSensorRead > SENSOR_INTERVAL) {
-      lastSensorRead = millis();
-      // Read DHT
-      float h = dht.readHumidity();
-      float t = dht.readTemperature(); // Celsius
-      
-      #if ENABLE_SERIAL_DEBUG
-      if (isnan(h) || isnan(t)) {
-        Serial.println(F("Failed to read from DHT sensor!"));
-      } else {
-        Serial.print(F("Humidity: "));
-        Serial.print(h);
-        Serial.print(F("%  Temperature: "));
-        Serial.print(t);
-        Serial.println(F("°C"));
-      }
-      #endif
-
-      // Send sensor data once (not twice)
-      if (!isnan(h) && !isnan(t)) {
-         sendSensorData(t, h);
-      }
-  }
   
   // Check WiFi connection (reconnect if lost)
   if (!portalActive && wifiConnected && WiFi.status() != WL_CONNECTED) {

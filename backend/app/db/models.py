@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text, DateTime, JSON, LargeBinary, Float
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text, DateTime, JSON, LargeBinary
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from db.session import Base
@@ -29,10 +29,6 @@ class Device(Base):
     last_seen = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     ip_address = Column(String, nullable=True)
     
-    # Sensors
-    temperature = Column(Float, nullable=True)
-    humidity = Column(Float, nullable=True)
-    
     # Store relay state as JSON: {"relay1": {"state": true}, ...}
     start_state = Column(JSON, default={})
     
@@ -61,17 +57,5 @@ class Schedule(Base):
 
     device = relationship("Device")
 
-class SensorReading(Base):
-    __tablename__ = "sensor_readings"
-
-    id = Column(Integer, primary_key=True, index=True)
-    device_id = Column(String, ForeignKey("devices.id"), index=True)
-    temperature = Column(Float)
-    humidity = Column(Float)
-    timestamp = Column(DateTime(timezone=True), server_default=func.now())
-    
-    device = relationship("Device", back_populates="readings")
-
 # Update Device relationships
 Device.owner = relationship("User", back_populates="devices")
-Device.readings = relationship("SensorReading", back_populates="device", cascade="all, delete-orphan")

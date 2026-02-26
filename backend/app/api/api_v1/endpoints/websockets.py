@@ -104,44 +104,7 @@ async def websocket_endpoint(
                         db.add(device)
                         await db.commit()
 
-                # 3. Sensor Update from Device (Temperature/Humidity)
-                elif msg_type == "sensor_update":
-                    sensor_data = message.get("data", {})
-                    # Broadcast to Frontend
-                    await manager.broadcast(device_id, {"type": "sensor_update", "data": sensor_data})
-                    
-                    # Update DB
-                    try:
-                        result = await db.execute(select(Device).filter(Device.id == device_id))
-                        device = result.scalars().first()
-                        if device:
-                            temp = None
-                            hum = None
-                            
-                            if "temperature" in sensor_data:
-                                temp = float(sensor_data["temperature"])
-                                device.temperature = temp
-                            if "humidity" in sensor_data:
-                                hum = float(sensor_data["humidity"])
-                                device.humidity = hum
-                                
-                            device.last_seen = datetime.now()
-                            db.add(device)
-                            
-                            # Add to History
-                            from db.models import SensorReading
-                            reading = SensorReading(
-                                device_id=device_id,
-                                temperature=temp,
-                                humidity=hum
-                            )
-                            db.add(reading)
-                            
-                            await db.commit()
-                    except Exception as e:
-                        print(f"Error updating sensor data: {e}")
-
-                # 4. Command from Frontend (User toggled switch on UI)
+                # 3. Command from Frontend (User toggled switch on UI)
                 elif msg_type == "command":
                     # Broadcast to Device (and other frontends)
                     # {"type": "command", "data": {"relay1": {"state": true}}}
